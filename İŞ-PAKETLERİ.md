@@ -46,22 +46,22 @@ Bu hafta sistemin genel mimarisi ve veri akışı tasarlanacaktır.
 
 ## System Architecture
 
-- [ ] Sistem mimarisinin belirlenmesi
-- [ ] Web (Next.js) ve mobil (React Native) uygulama mimarisinin planlanması
-- [ ] FastAPI backend servis mimarisinin tasarlanması
-- [ ] AI analiz servis mimarisinin planlanması
+- [x] Sistem mimarisinin belirlenmesi
+- [x] Web (Next.js) ve mobil (React Native) uygulama mimarisinin planlanması
+- [x] FastAPI backend servis mimarisinin tasarlanması
+- [x] AI analiz servis mimarisinin planlanması
 
 ## API Design
 
-- [ ] REST API endpoint yapısının belirlenmesi (/api/v1 prefix)
-- [ ] API request ve response modellerinin (Pydantic şemaları) tasarlanması
-- [ ] Authentication akışının planlanması (JWT access + refresh token)
+- [x] REST API endpoint yapısının belirlenmesi (/api/v1 prefix)
+- [x] API request ve response modellerinin (Pydantic şemaları) tasarlanması
+- [x] Authentication akışının planlanması (JWT access + refresh token)
 
 ## Data Flow
 
-- [ ] Kullanıcı veri akışının tasarlanması (web/mobil → FastAPI → PostgreSQL)
-- [ ] AI analiz veri akışının belirlenmesi
-- [ ] RAG sistem veri akışının planlanması (PubMed → Embedding → pgvector)
+- [x] Kullanıcı veri akışının tasarlanması (web/mobil → FastAPI → PostgreSQL)
+- [x] AI analiz veri akışının belirlenmesi
+- [x] RAG sistem veri akışının planlanması (PubMed → Embedding → pgvector)
 
 **Deliverable**
 
