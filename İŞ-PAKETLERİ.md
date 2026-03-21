@@ -76,21 +76,21 @@ Bu hafta veri saklama mimarisi ve veritabanı yapısı oluşturulacaktır.
 
 ## Database Schema Design
 
-- [ ] Kullanıcı veri modeli tasarlanması (Users)
-- [ ] Sağlık veri modeli tasarlanması (HealthData)
-- [ ] Semptom veri modeli tasarlanması (Symptoms)
-- [ ] Görsel analiz veri modeli tasarlanması (ImageAnalysis)
-- [ ] AI analiz sonuç veri modeli tasarlanması (AIAnalysisResults)
-- [ ] Bilimsel döküman veri modeli tasarlanması (ScientificDocuments — pgvector embedding dahil)
+- [x] Kullanıcı veri modeli tasarlanması (Users)
+- [x] Sağlık veri modeli tasarlanması (HealthData)
+- [x] Semptom veri modeli tasarlanması (Symptoms)
+- [x] Görsel analiz veri modeli tasarlanması (ImageAnalysis)
+- [x] AI analiz sonuç veri modeli tasarlanması (AIAnalysisResults)
+- [x] Bilimsel döküman veri modeli tasarlanması (ScientificDocuments — pgvector embedding dahil)
 
 ## Database Implementation
 
-- [ ] PostgreSQL veritabanı oluşturulması
-- [ ] pgvector extension aktif edilmesi
-- [ ] SQLAlchemy ORM modelleri oluşturulması
-- [ ] Alembic migration sistemi kurulması
-- [ ] Foreign key ilişkilerinin kurulması
-- [ ] Index optimizasyonlarının yapılması
+- [x] PostgreSQL veritabanı oluşturulması
+- [x] pgvector extension aktif edilmesi
+- [x] SQLAlchemy ORM modelleri oluşturulması
+- [x] Alembic migration sistemi kurulması
+- [x] Foreign key ilişkilerinin kurulması
+- [x] Index optimizasyonlarının yapılması
 
 **Deliverable**
 
