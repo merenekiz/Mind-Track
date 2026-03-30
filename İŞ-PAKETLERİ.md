@@ -105,23 +105,23 @@ Bu hafta FastAPI backend uygulamasının temel servisleri geliştirilecektir.
 
 ## Backend Project Setup
 
-- [ ] FastAPI proje yapısının oluşturulması (app/api, app/models, app/schemas, app/services, app/core)
-- [ ] Uvicorn ASGI sunucu yapılandırması
-- [ ] Environment configuration (python-dotenv)
-- [ ] CORS ayarlarının yapılması (web ve mobil için)
+- [x] FastAPI proje yapısının oluşturulması (app/api, app/models, app/schemas, app/services, app/core)
+- [x] Uvicorn ASGI sunucu yapılandırması
+- [x] Environment configuration (python-dotenv)
+- [x] CORS ayarlarının yapılması (web ve mobil için)
 
 ## Authentication System
 
-- [ ] Kullanıcı kayıt endpoint'inin geliştirilmesi (POST /api/v1/auth/register)
-- [ ] Kullanıcı giriş endpoint'inin geliştirilmesi (POST /api/v1/auth/login)
-- [ ] JWT access token ve refresh token sisteminin kurulması
-- [ ] Bcrypt ile şifre hashleme mekanizmasının uygulanması
-- [ ] Auth middleware (dependency injection ile korumalı route'lar)
+- [x] Kullanıcı kayıt endpoint'inin geliştirilmesi (POST /api/v1/auth/register)
+- [x] Kullanıcı giriş endpoint'inin geliştirilmesi (POST /api/v1/auth/login)
+- [x] JWT access token ve refresh token sisteminin kurulması
+- [x] Bcrypt ile şifre hashleme mekanizmasının uygulanması
+- [x] Auth middleware (dependency injection ile korumalı route'lar)
 
 ## Database Integration
 
-- [ ] SQLAlchemy async session yapılandırması
-- [ ] FastAPI ve PostgreSQL bağlantısının kurulması
+- [x] SQLAlchemy async session yapılandırması
+- [x] FastAPI ve PostgreSQL bağlantısının kurulması
 
 **Deliverable**
 
@@ -198,9 +198,9 @@ Bu hafta görseller üzerinden veri analiz sistemi geliştirilecektir.
 
 ## AI Vision Integration
 
-- [ ] Gemini Vision API (gemini-1.5-pro) entegrasyonu
+- [ ] Gemini Vision API entegrasyonu
 - [ ] Backend'de görsel analiz servisinin yazılması
-- [ ] Görsellerden kahve türü, kafein, yemek türü, kalori çıkarımı
+- [ ] Görsellerden kahve türü, kafein miktarı, yemek türü, kalori çıkarımı
 
 ## Data Storage
 
