@@ -135,15 +135,15 @@ Bu hafta kullanıcı sağlık verilerinin sisteme kaydedilmesi ve yönetilmesi s
 
 ## Health Data APIs
 
-- [ ] Günlük sağlık verisi ekleme endpoint'i (POST /api/v1/health-data)
-- [ ] Kullanıcı sağlık verilerini listeleme endpoint'i (GET /api/v1/health-data)
-- [ ] Sağlık verisi güncelleme endpoint'i (PUT /api/v1/health-data/{id})
-- [ ] Sağlık verisi silme endpoint'i (DELETE /api/v1/health-data/{id})
+- [x] Günlük sağlık verisi ekleme endpoint'i (POST /api/v1/health-data)
+- [x] Kullanıcı sağlık verilerini listeleme endpoint'i (GET /api/v1/health-data)
+- [x] Sağlık verisi güncelleme endpoint'i (PUT /api/v1/health-data/{id})
+- [x] Sağlık verisi silme endpoint'i (DELETE /api/v1/health-data/{id})
 
 ## Data Validation
 
-- [ ] Pydantic şemaları ile input validation
-- [ ] Veri doğrulama kurallarının uygulanması (min/max değerler, zorunlu alanlar)
+- [x] Pydantic şemaları ile input validation
+- [x] Veri doğrulama kurallarının uygulanması (min/max değerler, zorunlu alanlar)
 
 **Deliverable**
 
