@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
+from app.api.health_data import router as health_data_router
 
 app = FastAPI(
     title="MindTrack API",
@@ -23,6 +24,7 @@ app.add_middleware(
 
 # Routers
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(health_data_router, prefix="/api/v1/health-data", tags=["Health Data"])
 
 
 @app.get("/")
