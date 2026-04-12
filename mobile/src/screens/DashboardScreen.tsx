@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,9 +7,11 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../lib/api";
+import { colors } from "../lib/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -24,22 +26,27 @@ interface HealthData {
   notes: string | null;
 }
 
-const moodLabels: Record<string, string> = {
-  very_bad: "Çok Kötü",
-  bad: "Kötü",
-  neutral: "Normal",
-  good: "İyi",
-  very_good: "Çok İyi",
+const moodMap: Record<string, { label: string; color: string }> = {
+  very_bad: { label: "Çok Kötü", color: colors.accent3 },
+  bad: { label: "Kötü", color: colors.warn },
+  neutral: { label: "Normal", color: colors.muted },
+  good: { label: "İyi", color: colors.accent4 },
+  very_good: { label: "Çok İyi", color: colors.accent4 },
 };
 
-type Props = {
-  navigation: NativeStackNavigationProp<any>;
-};
+function valueBadge(val: number, _max: number, thresholds: [number, number]) {
+  if (val >= thresholds[1]) return colors.accent3;
+  if (val >= thresholds[0]) return colors.warn;
+  return colors.accent4;
+}
+
+type Props = { navigation: NativeStackNavigationProp<any> };
 
 export default function DashboardScreen({ navigation }: Props) {
   const { user, logout } = useAuth();
   const [data, setData] = useState<HealthData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -49,18 +56,17 @@ export default function DashboardScreen({ navigation }: Props) {
       setData([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+
+  const onRefresh = () => { setRefreshing(true); loadData(); };
 
   const handleDelete = (id: number) => {
-    Alert.alert("Sil", "Bu kaydı silmek istediğinize emin misiniz?", [
-      { text: "İptal", style: "cancel" },
+    Alert.alert("Kaydı Sil", "Bu kaydı kalıcı olarak silmek istediğinize emin misiniz?", [
+      { text: "Vazgeç", style: "cancel" },
       {
         text: "Sil",
         style: "destructive",
@@ -72,126 +78,327 @@ export default function DashboardScreen({ navigation }: Props) {
     ]);
   };
 
-  const handleLogout = () => {
-    logout();
+  // İstatistik hesapla
+  const last7 = data.slice(-7);
+  const safeAvg = (arr: HealthData[], key: keyof HealthData) => {
+    const valid = arr.filter((d) => d[key] !== null);
+    if (!valid.length) return null;
+    return valid.reduce((s, d) => s + (Number(d[key]) || 0), 0) / valid.length;
   };
 
-  const renderItem = ({ item }: { item: HealthData }) => (
-    <View style={styles.card}>
-      <Text style={styles.cardDate}>{item.date}</Text>
-      <View style={styles.cardDetails}>
-        {item.pain_level !== null && (
-          <Text style={styles.cardDetail}>Ağrı: {item.pain_level}/10</Text>
-        )}
-        {item.sleep_hours !== null && (
-          <Text style={styles.cardDetail}>Uyku: {item.sleep_hours} saat</Text>
-        )}
-        {item.sleep_quality !== null && (
-          <Text style={styles.cardDetail}>Uyku Kalitesi: {item.sleep_quality}/5</Text>
-        )}
-        {item.stress_level !== null && (
-          <Text style={styles.cardDetail}>Stres: {item.stress_level}/10</Text>
-        )}
-        {item.mood && (
-          <Text style={styles.cardDetail}>
-            Ruh Hali: {moodLabels[item.mood] || item.mood}
-          </Text>
-        )}
+  const avgSleep = safeAvg(last7, "sleep_hours");
+  const avgStress = safeAvg(last7, "stress_level");
+  const avgPain = safeAvg(last7, "pain_level");
+
+  const stats = [
+    {
+      label: "Uyku",
+      value: avgSleep !== null ? avgSleep.toFixed(1) : "—",
+      unit: "sa",
+      color: avgSleep !== null && avgSleep < 6 ? colors.accent3 : colors.accent,
+    },
+    {
+      label: "Stres",
+      value: avgStress !== null ? avgStress.toFixed(1) : "—",
+      unit: "/10",
+      color: avgStress !== null ? valueBadge(avgStress, 10, [5, 7]) : colors.text,
+    },
+    {
+      label: "Ağrı",
+      value: avgPain !== null ? avgPain.toFixed(1) : "—",
+      unit: "/10",
+      color: avgPain !== null ? valueBadge(avgPain, 10, [4, 7]) : colors.text,
+    },
+    {
+      label: "Kayıt",
+      value: String(data.length),
+      unit: "",
+      color: colors.accent,
+    },
+  ];
+
+  const renderRecord = ({ item }: { item: HealthData }) => {
+    const m = item.mood ? moodMap[item.mood] : null;
+    return (
+      <View style={s.recordCard}>
+        <View style={s.recordHeader}>
+          <Text style={s.recordDate}>{item.date}</Text>
+          <TouchableOpacity onPress={() => handleDelete(item.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Text style={s.deleteBtn}>Sil</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={s.recordMetrics}>
+          {item.pain_level !== null && (
+            <View style={s.metricChip}>
+              <Text style={[s.metricVal, { color: valueBadge(item.pain_level, 10, [4, 7]) }]}>
+                {item.pain_level}
+              </Text>
+              <Text style={s.metricLabel}>Ağrı</Text>
+            </View>
+          )}
+          {item.sleep_hours !== null && (
+            <View style={s.metricChip}>
+              <Text style={[s.metricVal, { color: colors.accent }]}>{item.sleep_hours}</Text>
+              <Text style={s.metricLabel}>Uyku</Text>
+            </View>
+          )}
+          {item.stress_level !== null && (
+            <View style={s.metricChip}>
+              <Text style={[s.metricVal, { color: valueBadge(item.stress_level, 10, [5, 7]) }]}>
+                {item.stress_level}
+              </Text>
+              <Text style={s.metricLabel}>Stres</Text>
+            </View>
+          )}
+          {item.sleep_quality !== null && (
+            <View style={s.metricChip}>
+              <Text style={[s.metricVal, { color: colors.accent4 }]}>{item.sleep_quality}</Text>
+              <Text style={s.metricLabel}>Kalite</Text>
+            </View>
+          )}
+          {m && (
+            <View style={s.metricChip}>
+              <Text style={[s.metricVal, { color: m.color, fontSize: 11 }]}>{m.label}</Text>
+              <Text style={s.metricLabel}>Ruh Hali</Text>
+            </View>
+          )}
+        </View>
+        {item.notes ? <Text style={s.recordNotes} numberOfLines={2}>{item.notes}</Text> : null}
       </View>
-      {item.notes && <Text style={styles.cardNotes}>{item.notes}</Text>}
-      <TouchableOpacity onPress={() => handleDelete(item.id)}>
-        <Text style={styles.deleteText}>Sil</Text>
-      </TouchableOpacity>
-    </View>
+    );
+  };
+
+  const ListHeader = () => (
+    <>
+      {/* Stat kartları */}
+      <View style={s.statsRow}>
+        {stats.map((st) => (
+          <View key={st.label} style={s.statCard}>
+            <Text style={s.statLabel}>{st.label.toUpperCase()}</Text>
+            <Text style={[s.statValue, { color: st.color }]}>
+              {st.value}
+              {st.unit ? <Text style={s.statUnit}>{st.unit}</Text> : null}
+            </Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Klinik bilgi paneli */}
+      <View style={s.clinicPanel}>
+        <View style={s.clinicBadge}>
+          <View style={[s.pulseDot, { backgroundColor: colors.purple }]} />
+          <Text style={s.clinicBadgeText}>Klinik Analiz</Text>
+        </View>
+        <Text style={s.clinicText}>
+          {data.length > 0
+            ? `Son ${Math.min(7, data.length)} günlük verileriniz değerlendiriliyor. Düzenli kayıt girdikçe sağlık trendleriniz daha net ortaya çıkacak.`
+            : "Henüz analiz edilecek veri bulunmuyor. İlk sağlık kaydınızı oluşturarak başlayın."}
+        </Text>
+        <Text style={s.clinicDisclaimer}>
+          Bu uygulama tıbbi tanı koymaz. Sonuçlar bilgilendirme amaçlıdır.
+        </Text>
+      </View>
+
+      {/* Kayıtlar başlık */}
+      <View style={s.sectionHeader}>
+        <Text style={s.sectionTitle}>Son Kayıtlar</Text>
+        <Text style={s.sectionSub}>{data.length} kayıt</Text>
+      </View>
+    </>
   );
 
+  if (loading) {
+    return (
+      <View style={s.loaderWrap}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={s.container}>
+      {/* Header */}
+      <View style={s.header}>
         <View>
-          <Text style={styles.headerTitle}>Sağlık Günlüğüm</Text>
-          <Text style={styles.headerSubtitle}>Merhaba, {user?.full_name}</Text>
+          <Text style={s.headerTitle}>Kontrol Paneli</Text>
+          <Text style={s.headerSub}>Merhaba, {user?.full_name}</Text>
         </View>
-        <TouchableOpacity onPress={handleLogout}>
-          <Text style={styles.logoutText}>Çıkış</Text>
+        <TouchableOpacity onPress={logout} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Text style={s.logoutText}>Çıkış</Text>
         </TouchableOpacity>
       </View>
 
-      {loading ? (
-        <ActivityIndicator style={styles.loader} size="large" color="#2563eb" />
-      ) : data.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>Henüz sağlık kaydınız bulunmuyor.</Text>
+      {data.length === 0 ? (
+        <View style={s.emptyWrap}>
+          <ListHeader />
+          <View style={s.emptyCard}>
+            <Text style={s.emptyText}>Henüz sağlık kaydınız bulunmuyor.</Text>
+            <TouchableOpacity onPress={() => navigation.navigate("NewHealthData")}>
+              <Text style={s.emptyLink}>İlk kaydınızı oluşturun</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       ) : (
         <FlatList
           data={data}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          renderItem={renderRecord}
+          ListHeaderComponent={ListHeader}
+          contentContainerStyle={s.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.accent}
+              colors={[colors.accent]}
+              progressBackgroundColor={colors.surface}
+            />
+          }
         />
       )}
 
+      {/* FAB */}
       <TouchableOpacity
-        style={styles.fab}
+        style={s.fab}
         onPress={() => navigation.navigate("NewHealthData")}
+        activeOpacity={0.85}
       >
-        <Text style={styles.fabText}>+</Text>
+        <Text style={s.fabIcon}>+</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  loaderWrap: { flex: 1, backgroundColor: colors.bg, justifyContent: "center", alignItems: "center" },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 20,
-    paddingTop: 50,
-    backgroundColor: "#fff",
+    paddingHorizontal: 18,
+    paddingTop: 54,
+    paddingBottom: 14,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    borderBottomColor: colors.border,
   },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#111827" },
-  headerSubtitle: { fontSize: 13, color: "#6b7280", marginTop: 2 },
-  logoutText: { color: "#ef4444", fontSize: 14 },
-  list: { padding: 16 },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+  headerTitle: { fontSize: 17, fontWeight: "800", color: colors.text },
+  headerSub: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  logoutText: { fontSize: 12, color: colors.accent3, fontWeight: "600" },
+
+  listContent: { padding: 14, paddingBottom: 90 },
+
+  // Stats
+  statsRow: { flexDirection: "row", gap: 8, marginBottom: 10 },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    padding: 12,
   },
-  cardDate: { fontSize: 16, fontWeight: "600", color: "#111827", marginBottom: 8 },
-  cardDetails: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  cardDetail: { fontSize: 13, color: "#6b7280" },
-  cardNotes: { fontSize: 13, color: "#9ca3af", marginTop: 8 },
-  deleteText: { color: "#ef4444", fontSize: 13, marginTop: 8 },
-  loader: { flex: 1, justifyContent: "center" },
-  empty: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { color: "#6b7280", fontSize: 15 },
+  statLabel: { fontSize: 9, color: colors.muted, letterSpacing: 1, marginBottom: 4 },
+  statValue: { fontSize: 22, fontWeight: "800" },
+  statUnit: { fontSize: 10, fontWeight: "400", color: colors.muted },
+
+  // Clinic Panel
+  clinicPanel: {
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: colors.purple + "30",
+    backgroundColor: colors.purple + "08",
+  },
+  clinicBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: colors.purple + "18",
+    borderWidth: 1,
+    borderColor: colors.purple + "40",
+    borderRadius: 20,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    alignSelf: "flex-start",
+    marginBottom: 9,
+  },
+  pulseDot: { width: 6, height: 6, borderRadius: 3 },
+  clinicBadgeText: { fontSize: 10, fontWeight: "700", color: colors.purple },
+  clinicText: { fontSize: 12, lineHeight: 19, color: colors.text },
+  clinicDisclaimer: {
+    fontSize: 10,
+    color: colors.muted,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+
+  // Section
+  sectionHeader: { marginBottom: 8 },
+  sectionTitle: { fontSize: 13, fontWeight: "700", color: colors.text },
+  sectionSub: { fontSize: 11, color: colors.muted, marginTop: 1 },
+
+  // Record card
+  recordCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 8,
+  },
+  recordHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
+  recordDate: { fontSize: 14, fontWeight: "700", color: colors.text },
+  deleteBtn: { fontSize: 11, color: colors.accent3 + "99", fontWeight: "500" },
+  recordMetrics: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  metricChip: {
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignItems: "center",
+    minWidth: 52,
+  },
+  metricVal: { fontSize: 15, fontWeight: "800" },
+  metricLabel: { fontSize: 9, color: colors.muted, letterSpacing: 0.5, marginTop: 2 },
+  recordNotes: { fontSize: 12, color: colors.muted, marginTop: 8, lineHeight: 17 },
+
+  // Empty
+  emptyWrap: { flex: 1, padding: 14 },
+  emptyCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    padding: 28,
+    alignItems: "center",
+  },
+  emptyText: { fontSize: 13, color: colors.muted, marginBottom: 8 },
+  emptyLink: { fontSize: 12, color: colors.accent, fontWeight: "600" },
+
+  // FAB
   fab: {
     position: "absolute",
-    right: 20,
-    bottom: 30,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#2563eb",
+    right: 18,
+    bottom: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.accent,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 5,
+    shadowColor: colors.accent,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
-  fabText: { color: "#fff", fontSize: 28, fontWeight: "300", marginTop: -2 },
+  fabIcon: { color: "#000", fontSize: 26, fontWeight: "300", marginTop: -1 },
 });

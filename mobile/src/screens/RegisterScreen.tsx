@@ -7,8 +7,12 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { colors } from "../lib/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type Props = {
@@ -47,111 +51,147 @@ export default function RegisterScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>MindTrack</Text>
-      <Text style={styles.subtitle}>Yeni hesap oluşturun</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Ad Soyad"
-        value={fullName}
-        onChangeText={setFullName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="E-posta"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Şifre"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Şifre Tekrar"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
-
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleRegister}
-        disabled={loading}
+    <KeyboardAvoidingView
+      style={s.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={s.scroll}
+        keyboardShouldPersistTaps="handled"
       >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Kayıt Ol</Text>
-        )}
-      </TouchableOpacity>
+        {/* Logo */}
+        <View style={s.logoWrap}>
+          <Text style={s.logoText}>
+            Mind<Text style={s.logoAccent}>Track</Text>
+          </Text>
+          <Text style={s.logoSub}>AKILLI SAĞLIK GÜNLÜĞÜ</Text>
+        </View>
 
-      <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-        <Text style={styles.linkText}>
-          Zaten hesabınız var mı? <Text style={styles.link}>Giriş Yap</Text>
-        </Text>
-      </TouchableOpacity>
-    </View>
+        {/* Card */}
+        <View style={s.card}>
+          <Text style={s.cardTitle}>Kayıt Ol</Text>
+          <Text style={s.cardSub}>Yeni hesap oluşturun</Text>
+
+          <Text style={s.label}>AD SOYAD</Text>
+          <TextInput
+            style={s.input}
+            placeholder="Adınız Soyadınız"
+            placeholderTextColor={colors.muted + "99"}
+            value={fullName}
+            onChangeText={setFullName}
+          />
+
+          <Text style={s.label}>E-POSTA</Text>
+          <TextInput
+            style={s.input}
+            placeholder="ornek@mail.com"
+            placeholderTextColor={colors.muted + "99"}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+          <Text style={s.label}>ŞİFRE</Text>
+          <TextInput
+            style={s.input}
+            placeholder="En az 6 karakter"
+            placeholderTextColor={colors.muted + "99"}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+
+          <Text style={s.label}>ŞİFRE TEKRAR</Text>
+          <TextInput
+            style={s.input}
+            placeholder="Şifrenizi tekrar girin"
+            placeholderTextColor={colors.muted + "99"}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+          />
+
+          <TouchableOpacity
+            style={[s.btn, loading && s.btnDisabled]}
+            onPress={handleRegister}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <ActivityIndicator color="#000" size="small" />
+            ) : (
+              <Text style={s.btnText}>Kayıt Ol</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Login")}
+            style={s.linkWrap}
+          >
+            <Text style={s.linkMuted}>
+              Zaten hesabınız var mı?{" "}
+              <Text style={s.linkAccent}>Giriş Yap</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  scroll: {
+    flexGrow: 1,
     justifyContent: "center",
     padding: 24,
-    backgroundColor: "#f9fafb",
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#111827",
-    marginBottom: 4,
+  logoWrap: { alignItems: "center", marginBottom: 36 },
+  logoText: { fontSize: 30, fontWeight: "800", color: colors.text, letterSpacing: -0.5 },
+  logoAccent: { color: colors.accent },
+  logoSub: {
+    fontSize: 10,
+    color: colors.muted,
+    letterSpacing: 2,
+    marginTop: 4,
   },
-  subtitle: {
-    fontSize: 14,
-    textAlign: "center",
-    color: "#6b7280",
-    marginBottom: 32,
+  card: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 20,
+  },
+  cardTitle: { fontSize: 15, fontWeight: "700", color: colors.text, marginBottom: 2 },
+  cardSub: { fontSize: 11, color: colors.muted, marginBottom: 20 },
+  label: {
+    fontSize: 10,
+    color: colors.muted,
+    letterSpacing: 0.8,
+    marginBottom: 5,
+    marginTop: 12,
   },
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface2,
     borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 12,
+    borderColor: colors.border,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    color: colors.text,
   },
-  button: {
-    backgroundColor: "#2563eb",
-    padding: 14,
-    borderRadius: 10,
+  btn: {
+    backgroundColor: colors.accent,
+    borderRadius: 6,
+    paddingVertical: 12,
     alignItems: "center",
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 18,
   },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  linkText: {
-    textAlign: "center",
-    color: "#6b7280",
-    fontSize: 14,
-  },
-  link: {
-    color: "#2563eb",
-  },
+  btnDisabled: { opacity: 0.45 },
+  btnText: { color: "#000", fontSize: 13, fontWeight: "700" },
+  linkWrap: { marginTop: 18, alignItems: "center" },
+  linkMuted: { fontSize: 12, color: colors.muted },
+  linkAccent: { color: colors.accent },
 });

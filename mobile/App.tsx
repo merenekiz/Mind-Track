@@ -1,15 +1,30 @@
 import React from "react";
 import { StatusBar, ActivityIndicator, View } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
+import { colors } from "./src/lib/theme";
 import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import DashboardScreen from "./src/screens/DashboardScreen";
 import NewHealthDataScreen from "./src/screens/NewHealthDataScreen";
 
 const Stack = createNativeStackNavigator();
+
+const MindTrackTheme = {
+  ...DefaultTheme,
+  dark: true,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: colors.accent,
+    background: colors.bg,
+    card: colors.surface,
+    text: colors.text,
+    border: colors.border,
+    notification: colors.accent3,
+  },
+};
 
 function AuthStack() {
   return (
@@ -22,7 +37,15 @@ function AuthStack() {
 
 function AppStack() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.surface },
+        headerTintColor: colors.accent,
+        headerTitleStyle: { fontSize: 15, fontWeight: "700", color: colors.text },
+        headerShadowVisible: false,
+        headerBackTitle: "Geri",
+      }}
+    >
       <Stack.Screen
         name="Dashboard"
         component={DashboardScreen}
@@ -31,7 +54,7 @@ function AppStack() {
       <Stack.Screen
         name="NewHealthData"
         component={NewHealthDataScreen}
-        options={{ title: "Yeni Kayıt", headerBackTitle: "Geri" }}
+        options={{ title: "Yeni Kayıt" }}
       />
     </Stack.Navigator>
   );
@@ -42,8 +65,8 @@ function RootNavigator() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#f9fafb" }}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.bg }}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
@@ -55,8 +78,8 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NavigationContainer>
-          <StatusBar barStyle="dark-content" />
+        <NavigationContainer theme={MindTrackTheme}>
+          <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
           <RootNavigator />
         </NavigationContainer>
       </AuthProvider>
