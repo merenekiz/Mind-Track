@@ -157,28 +157,28 @@ Bu hafta hem web hem mobil uygulamanın temel arayüzleri geliştirilecektir.
 
 ## Web App Setup (Next.js)
 
-- [ ] Next.js projesi oluşturulması (TypeScript)
-- [ ] Sayfa ve layout yapısının oluşturulması
-- [ ] Authentication sayfaları (kayıt / giriş)
+- [x] Next.js projesi oluşturulması (TypeScript)
+- [x] Sayfa ve layout yapısının oluşturulması
+- [x] Authentication sayfaları (kayıt / giriş)
 
 ## Mobile App Setup (React Native)
 
-- [ ] React Native projesi oluşturulması (TypeScript)
-- [ ] Navigasyon yapısının oluşturulması (React Navigation)
-- [ ] Authentication ekranları
+- [x] React Native projesi oluşturulması (TypeScript)
+- [x] Navigasyon yapısının oluşturulması (React Navigation)
+- [x] Authentication ekranları
 
 ## UI Development — Ortak Özellikler
 
-- [ ] Ana ekran tasarımı
-- [ ] Günlük veri giriş ekranı
-- [ ] Ağrı seviyesi giriş arayüzü
-- [ ] Uyku ve stres veri giriş ekranları
+- [x] Ana ekran tasarımı
+- [x] Günlük veri giriş ekranı
+- [x] Ağrı seviyesi giriş arayüzü
+- [x] Uyku ve stres veri giriş ekranları
 
 ## API Integration
 
-- [ ] FastAPI backend entegrasyonu (axios / fetch)
-- [ ] JWT token yönetimi (web: cookie / mobil: AsyncStorage)
-- [ ] Kullanıcı veri gönderme işlemleri
+- [x] FastAPI backend entegrasyonu (axios / fetch)
+- [x] JWT token yönetimi (web: cookie / mobil: AsyncStorage)
+- [x] Kullanıcı veri gönderme işlemleri
 
 **Deliverable**
 
