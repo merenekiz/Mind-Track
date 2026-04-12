@@ -4,27 +4,13 @@ import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
-import { colors } from "./src/lib/theme";
+import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import DashboardScreen from "./src/screens/DashboardScreen";
 import NewHealthDataScreen from "./src/screens/NewHealthDataScreen";
 
 const Stack = createNativeStackNavigator();
-
-const MindTrackTheme = {
-  ...DefaultTheme,
-  dark: true,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: colors.accent,
-    background: colors.bg,
-    card: colors.surface,
-    text: colors.text,
-    border: colors.border,
-    notification: colors.accent3,
-  },
-};
 
 function AuthStack() {
   return (
@@ -36,6 +22,7 @@ function AuthStack() {
 }
 
 function AppStack() {
+  const { colors } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -62,6 +49,7 @@ function AppStack() {
 
 function RootNavigator() {
   const { user, loading } = useAuth();
+  const { colors } = useTheme();
 
   if (loading) {
     return (
@@ -74,15 +62,42 @@ function RootNavigator() {
   return user ? <AppStack /> : <AuthStack />;
 }
 
+function AppWithNavigation() {
+  const { theme, colors } = useTheme();
+
+  const navTheme = {
+    ...DefaultTheme,
+    dark: theme === "dark",
+    colors: {
+      ...DefaultTheme.colors,
+      primary: colors.accent,
+      background: colors.bg,
+      card: colors.surface,
+      text: colors.text,
+      border: colors.border,
+      notification: colors.accent3,
+    },
+  };
+
+  return (
+    <NavigationContainer theme={navTheme}>
+      <StatusBar
+        barStyle={theme === "dark" ? "light-content" : "dark-content"}
+        backgroundColor={colors.bg}
+      />
+      <RootNavigator />
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <NavigationContainer theme={MindTrackTheme}>
-          <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
-          <RootNavigator />
-        </NavigationContainer>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppWithNavigation />
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

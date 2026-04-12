@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { colors } from "../lib/theme";
+import { useTheme } from "../context/ThemeContext";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type Props = {
@@ -21,6 +21,7 @@ type Props = {
 
 export default function RegisterScreen({ navigation }: Props) {
   const { register } = useAuth();
+  const { colors } = useTheme();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,16 +51,53 @@ export default function RegisterScreen({ navigation }: Props) {
     }
   };
 
+  const s = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    scroll: { flexGrow: 1, justifyContent: "center", padding: 24 },
+    logoWrap: { alignItems: "center", marginBottom: 36 },
+    logoText: { fontSize: 30, fontWeight: "800", color: colors.text, letterSpacing: -0.5 },
+    logoAccent: { color: colors.accent },
+    logoSub: { fontSize: 10, color: colors.muted, letterSpacing: 2, marginTop: 4 },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      padding: 20,
+    },
+    cardTitle: { fontSize: 15, fontWeight: "700", color: colors.text, marginBottom: 2 },
+    cardSub: { fontSize: 11, color: colors.muted, marginBottom: 20 },
+    label: { fontSize: 10, color: colors.muted, letterSpacing: 0.8, marginBottom: 5, marginTop: 12 },
+    input: {
+      backgroundColor: colors.surface2,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 13,
+      color: colors.text,
+    },
+    btn: {
+      backgroundColor: colors.accent,
+      borderRadius: 6,
+      paddingVertical: 12,
+      alignItems: "center",
+      marginTop: 18,
+    },
+    btnDisabled: { opacity: 0.45 },
+    btnText: { color: "#000", fontSize: 13, fontWeight: "700" },
+    linkWrap: { marginTop: 18, alignItems: "center" },
+    linkMuted: { fontSize: 12, color: colors.muted },
+    linkAccent: { color: colors.accent },
+  }), [colors]);
+
   return (
     <KeyboardAvoidingView
       style={s.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView
-        contentContainerStyle={s.scroll}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Logo */}
+      <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         <View style={s.logoWrap}>
           <Text style={s.logoText}>
             Mind<Text style={s.logoAccent}>Track</Text>
@@ -67,7 +105,6 @@ export default function RegisterScreen({ navigation }: Props) {
           <Text style={s.logoSub}>AKILLI SAĞLIK GÜNLÜĞÜ</Text>
         </View>
 
-        {/* Card */}
         <View style={s.card}>
           <Text style={s.cardTitle}>Kayıt Ol</Text>
           <Text style={s.cardSub}>Yeni hesap oluşturun</Text>
@@ -125,13 +162,9 @@ export default function RegisterScreen({ navigation }: Props) {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Login")}
-            style={s.linkWrap}
-          >
+          <TouchableOpacity onPress={() => navigation.navigate("Login")} style={s.linkWrap}>
             <Text style={s.linkMuted}>
-              Zaten hesabınız var mı?{" "}
-              <Text style={s.linkAccent}>Giriş Yap</Text>
+              Zaten hesabınız var mı? <Text style={s.linkAccent}>Giriş Yap</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -139,59 +172,3 @@ export default function RegisterScreen({ navigation }: Props) {
     </KeyboardAvoidingView>
   );
 }
-
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
-  logoWrap: { alignItems: "center", marginBottom: 36 },
-  logoText: { fontSize: 30, fontWeight: "800", color: colors.text, letterSpacing: -0.5 },
-  logoAccent: { color: colors.accent },
-  logoSub: {
-    fontSize: 10,
-    color: colors.muted,
-    letterSpacing: 2,
-    marginTop: 4,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    padding: 20,
-  },
-  cardTitle: { fontSize: 15, fontWeight: "700", color: colors.text, marginBottom: 2 },
-  cardSub: { fontSize: 11, color: colors.muted, marginBottom: 20 },
-  label: {
-    fontSize: 10,
-    color: colors.muted,
-    letterSpacing: 0.8,
-    marginBottom: 5,
-    marginTop: 12,
-  },
-  input: {
-    backgroundColor: colors.surface2,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 13,
-    color: colors.text,
-  },
-  btn: {
-    backgroundColor: colors.accent,
-    borderRadius: 6,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginTop: 18,
-  },
-  btnDisabled: { opacity: 0.45 },
-  btnText: { color: "#000", fontSize: 13, fontWeight: "700" },
-  linkWrap: { marginTop: 18, alignItems: "center" },
-  linkMuted: { fontSize: 12, color: colors.muted },
-  linkAccent: { color: colors.accent },
-});
