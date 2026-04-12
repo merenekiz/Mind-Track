@@ -19,8 +19,8 @@ export default function HomePage() {
   }, [user, loading, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-gray-400">Yükleniyor...</div>
+    <div className="min-h-screen flex items-center justify-center bg-mt-bg">
+      <div className="text-mt-muted text-sm">Yükleniyor...</div>
     </div>
   );
 }

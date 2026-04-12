@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
@@ -14,8 +14,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MindTrack",
-  description: "Somatik Belirti & Duygu Analizi Yapan Akıllı Sağlık Günlüğü",
+  title: "MindTrack — Akıllı Sağlık Günlüğü",
+  description:
+    "Somatik belirti ve duygu analizi yapan yapay zeka destekli sağlık takip platformu.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#060a10",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -24,9 +30,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr">
+    <html lang="tr" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-mt-bg text-mt-text`}
       >
         <AuthProvider>{children}</AuthProvider>
       </body>
