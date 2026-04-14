@@ -22,15 +22,18 @@ export default function DashboardLayout({
   if (loading || !user) {
     return (
       <div className="h-screen flex items-center justify-center bg-mt-bg">
-        <div className="text-mt-muted text-sm">Yükleniyor...</div>
+        <svg className="animate-spin h-8 w-8 text-mt-accent" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-mt-bg">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto min-w-0 flex flex-col">
+      <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
         {children}
       </main>
     </div>
