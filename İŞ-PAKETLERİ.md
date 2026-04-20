@@ -192,19 +192,19 @@ Bu hafta görseller üzerinden veri analiz sistemi geliştirilecektir.
 
 ## Image Capture System
 
-- [ ] Web uygulamasına dosya yükleme özelliğinin eklenmesi
-- [ ] Mobil uygulamaya kamera ve galeri erişiminin eklenmesi
-- [ ] Görsellerin multipart/form-data olarak backend'e gönderilmesi
+- [x] Web uygulamasına dosya yükleme özelliğinin eklenmesi
+- [x] Mobil uygulamaya kamera ve galeri erişiminin eklenmesi
+- [x] Görsellerin multipart/form-data olarak backend'e gönderilmesi
 
 ## AI Vision Integration
 
-- [ ] Gemini Vision API entegrasyonu
-- [ ] Backend'de görsel analiz servisinin yazılması
-- [ ] Görsellerden kahve türü, kafein miktarı, yemek türü, kalori çıkarımı
+- [x] Gemini Vision API entegrasyonu
+- [x] Backend'de görsel analiz servisinin yazılması
+- [x] Görsellerden kahve türü, kafein miktarı, yemek türü, kalori çıkarımı
 
 ## Data Storage
 
-- [ ] Görsel analiz sonuçlarının ImageAnalysis tablosuna kaydedilmesi
+- [x] Görsel analiz sonuçlarının ImageAnalysis tablosuna kaydedilmesi
 
 **Deliverable**
 
