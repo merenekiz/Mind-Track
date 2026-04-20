@@ -45,17 +45,6 @@ function stressColor(v: number) {
   return "var(--mt-accent4)";
 }
 
-function painColorClass(v: number) {
-  if (v >= 7) return "text-mt-accent3";
-  if (v >= 4) return "text-mt-warn";
-  return "text-mt-accent4";
-}
-
-function stressColorClass(v: number) {
-  if (v >= 7) return "text-mt-accent3";
-  if (v >= 5) return "text-mt-warn";
-  return "text-mt-accent4";
-}
 
 export default function NewHealthDataPage() {
   const { user } = useAuth();
@@ -87,6 +76,17 @@ export default function NewHealthDataPage() {
   const [notes, setNotes] = useState("");
   const [nutritionPhoto, setNutritionPhoto] = useState<File | null>(null);
   const [nutritionPreview, setNutritionPreview] = useState<string | null>(null);
+  const [imageAnalyzing, setImageAnalyzing] = useState(false);
+  const [imageAnalysisResult, setImageAnalysisResult] = useState<{
+    category?: string;
+    item_name?: string;
+    estimated_calories?: number | null;
+    caffeine_mg?: number | null;
+    nutrients?: Record<string, number> | null;
+    description?: string;
+    health_notes?: string | null;
+  } | null>(null);
+  const [imageAnalysisError, setImageAnalysisError] = useState("");
 
   if (!user) return null;
 
@@ -98,13 +98,29 @@ export default function NewHealthDataPage() {
     );
   };
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setNutritionPhoto(file);
-      const reader = new FileReader();
-      reader.onload = () => setNutritionPreview(reader.result as string);
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setNutritionPhoto(file);
+    setImageAnalysisError("");
+    setImageAnalysisResult(null);
+
+    // Preview
+    const reader = new FileReader();
+    reader.onload = () => setNutritionPreview(reader.result as string);
+    reader.readAsDataURL(file);
+
+    // Gemini Vision analizi
+    setImageAnalyzing(true);
+    try {
+      const result = await api.uploadAndAnalyzeImage(file);
+      setImageAnalysisResult(result.analysis_result);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Görsel analizi başarısız";
+      setImageAnalysisError(message);
+    } finally {
+      setImageAnalyzing(false);
     }
   };
 
@@ -231,7 +247,7 @@ export default function NewHealthDataPage() {
                     <div>
                       <div className="flex items-center justify-between" style={{ marginBottom: 20 }}>
                         <label className="text-mt-text2" style={{ fontSize: 14, fontWeight: 500 }}>Stres Seviyesi</label>
-                        <span className={stressColorClass(stressLevel)} style={{ fontSize: 32, fontWeight: 800, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+                        <span style={{ fontSize: 32, fontWeight: 800, fontVariantNumeric: "tabular-nums", lineHeight: 1, color: stressColor(stressLevel) }}>
                           {stressLevel}
                           <span className="text-mt-muted" style={{ fontSize: 12, fontWeight: 400, marginLeft: 6 }}>/10</span>
                         </span>
@@ -566,6 +582,90 @@ export default function NewHealthDataPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Analiz Durumu */}
+                  {imageAnalyzing && (
+                    <div className="flex items-center bg-mt-accent4/8 border border-mt-accent4/20" style={{ padding: "16px 24px", borderRadius: 12, marginTop: 20, gap: 12 }}>
+                      <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="var(--mt-accent4)" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <span className="text-mt-accent4" style={{ fontSize: 14, fontWeight: 500 }}>Gemini Vision ile analiz ediliyor...</span>
+                    </div>
+                  )}
+
+                  {imageAnalysisError && (
+                    <div className="bg-mt-accent3/10 border border-mt-accent3/20 text-mt-accent3" style={{ padding: "16px 24px", borderRadius: 12, marginTop: 20, fontSize: 13 }}>
+                      {imageAnalysisError}
+                    </div>
+                  )}
+
+                  {/* Analiz Sonucu */}
+                  {imageAnalysisResult && !imageAnalyzing && (
+                    <div className="bg-mt-surface2 border border-mt-border" style={{ borderRadius: 16, padding: 28, marginTop: 20 }}>
+                      <div className="flex items-center" style={{ gap: 12, marginBottom: 20 }}>
+                        <div className="bg-mt-accent4/15 flex items-center justify-center" style={{ width: 36, height: 36, borderRadius: 10 }}>
+                          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8" className="text-mt-accent4">
+                            <path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: 14, fontWeight: 700 }}>AI Analiz Sonucu</p>
+                          <p className="text-mt-muted" style={{ fontSize: 11 }}>Gemini Vision</p>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        {imageAnalysisResult.item_name && (
+                          <div className="flex justify-between" style={{ paddingBottom: 12, borderBottom: "1px solid var(--mt-border)" }}>
+                            <span className="text-mt-text2" style={{ fontSize: 13 }}>Tanım</span>
+                            <span style={{ fontSize: 13, fontWeight: 600 }}>{imageAnalysisResult.item_name}</span>
+                          </div>
+                        )}
+                        {imageAnalysisResult.category && (
+                          <div className="flex justify-between" style={{ paddingBottom: 12, borderBottom: "1px solid var(--mt-border)" }}>
+                            <span className="text-mt-text2" style={{ fontSize: 13 }}>Kategori</span>
+                            <span className="text-mt-accent4" style={{ fontSize: 13, fontWeight: 600, textTransform: "capitalize" }}>
+                              {imageAnalysisResult.category === "food" ? "Yiyecek" : imageAnalysisResult.category === "drink" ? "Icecek" : "Diger"}
+                            </span>
+                          </div>
+                        )}
+                        {imageAnalysisResult.estimated_calories != null && (
+                          <div className="flex justify-between" style={{ paddingBottom: 12, borderBottom: "1px solid var(--mt-border)" }}>
+                            <span className="text-mt-text2" style={{ fontSize: 13 }}>Tahmini Kalori</span>
+                            <span className="text-mt-warn" style={{ fontSize: 13, fontWeight: 700 }}>{imageAnalysisResult.estimated_calories} kcal</span>
+                          </div>
+                        )}
+                        {imageAnalysisResult.caffeine_mg != null && (
+                          <div className="flex justify-between" style={{ paddingBottom: 12, borderBottom: "1px solid var(--mt-border)" }}>
+                            <span className="text-mt-text2" style={{ fontSize: 13 }}>Kafein</span>
+                            <span className="text-mt-accent2" style={{ fontSize: 13, fontWeight: 700 }}>{imageAnalysisResult.caffeine_mg} mg</span>
+                          </div>
+                        )}
+                        {imageAnalysisResult.nutrients && (
+                          <div style={{ paddingBottom: 12, borderBottom: "1px solid var(--mt-border)" }}>
+                            <span className="text-mt-text2 block" style={{ fontSize: 13, marginBottom: 10 }}>Besin Degerleri</span>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                              {Object.entries(imageAnalysisResult.nutrients).map(([key, val]) => (
+                                <div key={key} className="flex justify-between bg-mt-surface border border-mt-border" style={{ padding: "8px 14px", borderRadius: 8 }}>
+                                  <span className="text-mt-muted" style={{ fontSize: 11 }}>{key.replace(/_/g, " ").replace(" g", "")}</span>
+                                  <span style={{ fontSize: 11, fontWeight: 700 }}>{val}g</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {imageAnalysisResult.description && (
+                          <p className="text-mt-text2" style={{ fontSize: 13, lineHeight: 1.6 }}>{imageAnalysisResult.description}</p>
+                        )}
+                        {imageAnalysisResult.health_notes && (
+                          <div className="bg-mt-accent/8 border border-mt-accent/15" style={{ padding: "12px 16px", borderRadius: 10, marginTop: 4 }}>
+                            <p className="text-mt-accent" style={{ fontSize: 12, lineHeight: 1.5 }}>{imageAnalysisResult.health_notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
