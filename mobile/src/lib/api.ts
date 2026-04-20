@@ -54,4 +54,43 @@ export const api = {
 
   deleteHealthData: (id: number) =>
     request(`/health-data/${id}`, { method: "DELETE" }),
+
+  // Image Analysis
+  uploadAndAnalyzeImage: async (uri: string, fileName: string, mimeType: string) => {
+    const token = await AsyncStorage.getItem("access_token");
+    const formData = new FormData();
+    formData.append("file", {
+      uri,
+      name: fileName,
+      type: mimeType,
+    } as unknown as Blob);
+
+    const res = await fetch(`${API_URL}/image-analysis`, {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    if (res.status === 401) {
+      await AsyncStorage.removeItem("access_token");
+      await AsyncStorage.removeItem("refresh_token");
+      throw new Error("Unauthorized");
+    }
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.detail || "Görsel analizi başarısız");
+    }
+
+    return res.json();
+  },
+
+  getImageAnalyses: () => request("/image-analysis"),
+
+  getImageAnalysis: (id: number) => request(`/image-analysis/${id}`),
+
+  deleteImageAnalysis: (id: number) =>
+    request(`/image-analysis/${id}`, { method: "DELETE" }),
 };
