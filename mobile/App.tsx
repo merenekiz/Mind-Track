@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
-import DashboardScreen from "./src/screens/DashboardScreen";
+import MainTabsScreen from "./src/screens/MainTabsScreen";
 import NewHealthDataScreen from "./src/screens/NewHealthDataScreen";
 
 const Stack = createNativeStackNavigator();
@@ -27,15 +27,15 @@ function AppStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.accent,
-        headerTitleStyle: { fontSize: 15, fontWeight: "700", color: colors.text },
+        headerTintColor: colors.primary,
+        headerTitleStyle: { fontSize: 16, fontWeight: "700", color: colors.text },
         headerShadowVisible: false,
         headerBackTitle: "Geri",
       }}
     >
       <Stack.Screen
-        name="Dashboard"
-        component={DashboardScreen}
+        name="Main"
+        component={MainTabsScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
@@ -53,8 +53,15 @@ function RootNavigator() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.bg }}>
-        <ActivityIndicator size="large" color={colors.accent} />
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.bg,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -70,12 +77,12 @@ function AppWithNavigation() {
     dark: theme === "dark",
     colors: {
       ...DefaultTheme.colors,
-      primary: colors.accent,
+      primary: colors.primary,
       background: colors.bg,
       card: colors.surface,
       text: colors.text,
       border: colors.border,
-      notification: colors.accent3,
+      notification: colors.danger,
     },
   };
 
