@@ -1,13 +1,18 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Literal, Optional
+
+
+MealType = Literal["breakfast", "lunch", "dinner", "snack"]
 
 
 class ImageAnalysisResponse(BaseModel):
     id: int
     user_id: int
+    health_data_id: Optional[int] = None
     file_path: str
     category: str
+    meal_type: Optional[MealType] = None
     analysis_result: dict[str, Any]
     created_at: datetime
 
