@@ -12,10 +12,15 @@ class ImageAnalysis(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    health_data_id: Mapped[int | None] = mapped_column(
+        ForeignKey("health_data.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     file_path: Mapped[str] = mapped_column(String(500), nullable=False)
     category: Mapped[str] = mapped_column(String(50), nullable=False)  # food, drink, other
+    meal_type: Mapped[str | None] = mapped_column(String(20), nullable=True)  # breakfast, lunch, dinner, snack
     analysis_result: Mapped[dict] = mapped_column(JSONB, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    # Relationship
+    # Relationships
     user = relationship("User", back_populates="image_analyses")
+    health_data = relationship("HealthData", back_populates="nutrition_images")

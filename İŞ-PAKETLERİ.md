@@ -218,15 +218,15 @@ Bu hafta kullanıcıların metin olarak semptom girebilmesi sağlanacaktır.
 
 ## Text Input System
 
-- [ ] Web ve mobil uygulamada semptom metin giriş alanı oluşturulması
-- [ ] Metin verisinin backend'e gönderilmesi
+- [x] Web ve mobil uygulamada semptom metin giriş alanı oluşturulması
+- [x] Metin verisinin backend'e gönderilmesi
 
 ## LLM Text Analysis
 
-- [ ] Gemini API ile metin analiz pipeline oluşturulması
-- [ ] Semptom çıkarımı için prompt mühendisliği
-- [ ] Yapılandırılmış semptom verisi (JSON) oluşturulması
-- [ ] Semptomların Symptoms tablosuna kaydedilmesi
+- [x] Gemini API ile metin analiz pipeline oluşturulması
+- [x] Semptom çıkarımı için prompt mühendisliği
+- [x] Yapılandırılmış semptom verisi (JSON) oluşturulması
+- [x] Semptomların Symptoms tablosuna kaydedilmesi
 
 **Deliverable**
 

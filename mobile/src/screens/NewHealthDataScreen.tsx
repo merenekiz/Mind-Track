@@ -12,6 +12,7 @@ import {
   Image,
 } from "react-native";
 import Slider from "@react-native-community/slider";
+import { launchImageLibrary, launchCamera, type Asset } from "react-native-image-picker";
 import { api } from "../lib/api";
 import { useTheme } from "../context/ThemeContext";
 import type { ThemeColors } from "../lib/theme";
@@ -79,6 +80,142 @@ export default function NewHealthDataScreen({ navigation }: Props) {
   const [mood, setMood] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Beslenme — öğün bazlı
+  type MealKey = "breakfast" | "lunch" | "dinner" | "snack";
+  type MealAnalysis = {
+    category?: string;
+    item_name?: string;
+    estimated_calories?: number | null;
+    caffeine_mg?: number | null;
+    description?: string;
+    health_notes?: string | null;
+  };
+  type MealState = { uris: string[]; results: MealAnalysis[]; analyzing: boolean; error: string };
+  const emptyMeal = (): MealState => ({ uris: [], results: [], analyzing: false, error: "" });
+
+  const MEALS: { key: MealKey; label: string; emoji: string }[] = [
+    { key: "breakfast", label: "Kahvaltı", emoji: "🥐" },
+    { key: "lunch", label: "Öğle", emoji: "🥗" },
+    { key: "dinner", label: "Akşam", emoji: "🍲" },
+    { key: "snack", label: "Atıştırmalık", emoji: "☕" },
+  ];
+
+  const [meals, setMeals] = useState<Record<MealKey, MealState>>({
+    breakfast: emptyMeal(),
+    lunch: emptyMeal(),
+    dinner: emptyMeal(),
+    snack: emptyMeal(),
+  });
+  const [activeMeal, setActiveMeal] = useState<MealKey>("breakfast");
+
+  const mealCalories = (m: MealState) =>
+    m.results.reduce((sum, r) => sum + (r.estimated_calories || 0), 0);
+
+  const uploadAssets = async (mealKey: MealKey, assets: Asset[]) => {
+    const valid = assets.filter((a) => a.uri && a.fileName && a.type);
+    if (valid.length === 0) return;
+
+    const uris = valid.map((a) => a.uri!);
+    setMeals((prev) => ({
+      ...prev,
+      [mealKey]: { ...prev[mealKey], uris: [...prev[mealKey].uris, ...uris], analyzing: true, error: "" },
+    }));
+
+    try {
+      const payload = valid.map((a) => ({
+        uri: a.uri!,
+        fileName: a.fileName!,
+        mimeType: a.type!,
+      }));
+      const results = await api.bulkUploadAndAnalyzeImages(payload, { mealType: mealKey });
+      const mapped: MealAnalysis[] = (results as any[]).map((r) => ({
+        category: r.category,
+        item_name: r.analysis_result?.item_name,
+        estimated_calories: r.analysis_result?.estimated_calories,
+        caffeine_mg: r.analysis_result?.caffeine_mg,
+        description: r.analysis_result?.description,
+        health_notes: r.analysis_result?.health_notes,
+      }));
+      setMeals((prev) => ({
+        ...prev,
+        [mealKey]: { ...prev[mealKey], results: [...prev[mealKey].results, ...mapped], analyzing: false },
+      }));
+    } catch (err: any) {
+      setMeals((prev) => ({
+        ...prev,
+        [mealKey]: {
+          ...prev[mealKey],
+          uris: prev[mealKey].uris.slice(0, prev[mealKey].uris.length - uris.length),
+          analyzing: false,
+          error: err?.message || "Görsel analizi başarısız",
+        },
+      }));
+    }
+  };
+
+  const pickFromLibrary = async (mealKey: MealKey) => {
+    const res = await launchImageLibrary({
+      mediaType: "photo",
+      selectionLimit: 0,
+      quality: 0.8,
+    });
+    if (res.didCancel || !res.assets) return;
+    await uploadAssets(mealKey, res.assets);
+  };
+
+  const pickFromCamera = async (mealKey: MealKey) => {
+    const res = await launchCamera({
+      mediaType: "photo",
+      quality: 0.8,
+      saveToPhotos: false,
+    });
+    if (res.didCancel || !res.assets) return;
+    await uploadAssets(mealKey, res.assets);
+  };
+
+  const promptPickSource = (mealKey: MealKey, mealLabel: string) => {
+    Alert.alert(`${mealLabel} fotoğrafı`, "Kaynak seçin", [
+      { text: "Kamera", onPress: () => pickFromCamera(mealKey) },
+      { text: "Galeri", onPress: () => pickFromLibrary(mealKey) },
+      { text: "Vazgeç", style: "cancel" },
+    ]);
+  };
+  const totalCalories = (Object.values(meals) as MealState[]).reduce(
+    (sum, m) => sum + mealCalories(m),
+    0,
+  );
+  const totalPhotos = (Object.values(meals) as MealState[]).reduce(
+    (sum, m) => sum + m.uris.length,
+    0,
+  );
+
+  // Semptom metin analizi
+  const [symptomText, setSymptomText] = useState("");
+  const [symptomAnalyzing, setSymptomAnalyzing] = useState(false);
+  const [symptomError, setSymptomError] = useState("");
+  const [symptomResult, setSymptomResult] = useState<{
+    symptoms?: { name: string; severity?: string | null; body_region?: string | null; duration?: string | null }[];
+    summary?: string;
+    suggested_categories?: string[];
+  } | null>(null);
+
+  const handleAnalyzeSymptom = async () => {
+    if (!symptomText.trim() || symptomText.trim().length < 3) {
+      setSymptomError("En az 3 karakter girin");
+      return;
+    }
+    setSymptomError("");
+    setSymptomAnalyzing(true);
+    try {
+      const result = await api.createSymptom({ text: symptomText.trim(), date: today });
+      setSymptomResult(result.detected_symptoms);
+    } catch (err: any) {
+      setSymptomError(err?.message || "Semptom analizi başarısız");
+    } finally {
+      setSymptomAnalyzing(false);
+    }
+  };
 
   const toggleBodyRegion = (regionId: string) => {
     setSelectedBodyRegions((prev) =>
@@ -292,14 +429,270 @@ export default function NewHealthDataScreen({ navigation }: Props) {
           placeholderTextColor={colors.muted + "80"} multiline numberOfLines={3} maxLength={1000} textAlignVertical="top" />
       </View>
 
-      {/* ═══ Beslenme ═══ */}
+      {/* ═══ Beslenme — Öğün Bazlı ═══ */}
       <View style={s.card}>
-        <Text style={s.cardTitle}>Beslenme</Text>
-        <TouchableOpacity style={s.photoUpload} activeOpacity={0.7}>
-          <Text style={[s.photoUploadIcon, { color: colors.accent4 }]}>📷</Text>
-          <Text style={s.photoUploadTitle}>Beslenme Fotoğrafı Yükle</Text>
-          <Text style={s.photoUploadDesc}>Yediğiniz yemeğin fotoğrafını yükleyin — AI ile analiz edilecek</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <Text style={s.cardTitle}>Beslenme — Öğünler</Text>
+          {totalPhotos > 0 && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: colors.warn + "14", borderWidth: 1, borderColor: colors.warn + "30", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 }}>
+              <Text style={{ fontSize: 10, fontWeight: "600", color: colors.text2 }}>Toplam</Text>
+              <Text style={{ fontSize: 13, fontWeight: "800", color: colors.warn }}>{totalCalories} kcal</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Meal Tabs */}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+          {MEALS.map((m) => {
+            const state = meals[m.key];
+            const cals = mealCalories(state);
+            const isActive = activeMeal === m.key;
+            return (
+              <TouchableOpacity
+                key={m.key}
+                onPress={() => setActiveMeal(m.key)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  backgroundColor: isActive ? colors.accent4 : colors.surface2,
+                  borderColor: isActive ? colors.accent4 : colors.border,
+                }}
+              >
+                <Text style={{ fontSize: 14 }}>{m.emoji}</Text>
+                <Text style={{ fontSize: 12, fontWeight: "600", color: isActive ? "#0A0E1A" : colors.text2 }}>{m.label}</Text>
+                {state.uris.length > 0 && (
+                  <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: isActive ? "rgba(0,0,0,0.18)" : colors.surface3 }}>
+                    <Text style={{ fontSize: 10, fontWeight: "700", color: isActive ? "#0A0E1A" : colors.text }}>
+                      {state.uris.length}{cals > 0 ? `·${cals}` : ""}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Active Meal Panel */}
+        {(() => {
+          const meal = MEALS.find((m) => m.key === activeMeal)!;
+          const state = meals[activeMeal];
+          return (
+            <View>
+              {state.uris.length > 0 && (
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                  {state.uris.map((uri, i) => (
+                    <View key={i} style={{ position: "relative" }}>
+                      <Image source={{ uri }} style={{ width: 80, height: 80, borderRadius: 8, borderWidth: 1, borderColor: colors.border }} />
+                      <TouchableOpacity
+                        onPress={() => {
+                          setMeals((prev) => ({
+                            ...prev,
+                            [activeMeal]: {
+                              ...prev[activeMeal],
+                              uris: prev[activeMeal].uris.filter((_, idx) => idx !== i),
+                              results: prev[activeMeal].results.filter((_, idx) => idx !== i),
+                            },
+                          }));
+                        }}
+                        style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: 10, backgroundColor: colors.accent3, alignItems: "center", justifyContent: "center" }}
+                      >
+                        <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>×</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={[s.photoUpload, state.analyzing && { opacity: 0.5 }]}
+                activeOpacity={0.7}
+                disabled={state.analyzing}
+                onPress={() => promptPickSource(activeMeal, meal.label)}
+              >
+                <Text style={[s.photoUploadIcon, { color: colors.accent4 }]}>📷</Text>
+                <Text style={s.photoUploadTitle}>
+                  {state.uris.length > 0 ? `+ ${meal.label} fotoğrafı ekle` : `${meal.emoji} ${meal.label} fotoğrafı yükle`}
+                </Text>
+                <Text style={s.photoUploadDesc}>
+                  {state.uris.length > 0
+                    ? `${state.uris.length} fotoğraf · ${mealCalories(state)} kcal`
+                    : "Birden fazla seçebilirsiniz — Gemini Vision her birini ayrı analiz eder"}
+                </Text>
+              </TouchableOpacity>
+
+              {state.analyzing && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: colors.accent4 + "14", borderWidth: 1, borderColor: colors.accent4 + "30", borderRadius: 8, padding: 12, marginTop: 10 }}>
+                  <ActivityIndicator size="small" color={colors.accent4} />
+                  <Text style={{ fontSize: 13, color: colors.accent4, fontWeight: "500" }}>
+                    {meal.label} analiz ediliyor...
+                  </Text>
+                </View>
+              )}
+
+              {state.error !== "" && (
+                <View style={{ backgroundColor: colors.accent3 + "14", borderWidth: 1, borderColor: colors.accent3 + "30", borderRadius: 8, padding: 12, marginTop: 10 }}>
+                  <Text style={{ fontSize: 12, color: colors.accent3 }}>{state.error}</Text>
+                </View>
+              )}
+
+              {state.results.map((result, idx) => (
+                <View key={idx} style={{ backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14, marginTop: 10 }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: colors.text }}>{result.item_name || `${meal.label} #${idx + 1}`}</Text>
+                    {result.estimated_calories != null && (
+                      <Text style={{ fontSize: 15, fontWeight: "800", color: colors.warn }}>{result.estimated_calories} kcal</Text>
+                    )}
+                  </View>
+                  {result.category && (
+                    <Text style={{ fontSize: 11, color: colors.accent4, fontWeight: "600", marginBottom: 4 }}>
+                      {result.category === "food" ? "Yiyecek" : result.category === "drink" ? "İçecek" : "Diğer"}
+                    </Text>
+                  )}
+                  {result.caffeine_mg != null && (
+                    <Text style={{ fontSize: 11, color: colors.accent2, fontWeight: "600", marginBottom: 4 }}>Kafein: {result.caffeine_mg} mg</Text>
+                  )}
+                  {result.description && (
+                    <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18, marginTop: 4 }}>{result.description}</Text>
+                  )}
+                  {result.health_notes && (
+                    <View style={{ backgroundColor: colors.accent + "0D", borderRadius: 6, padding: 8, marginTop: 6 }}>
+                      <Text style={{ fontSize: 11, color: colors.accent, lineHeight: 16 }}>{result.health_notes}</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          );
+        })()}
+
+        {/* Per-meal summary footer */}
+        {totalPhotos > 0 && (
+          <View style={{ marginTop: 14, padding: 12, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, borderRadius: 10 }}>
+            <Text style={{ fontSize: 10, fontWeight: "700", color: colors.muted, letterSpacing: 0.5, marginBottom: 8 }}>ÖĞÜN DAĞILIMI</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {MEALS.map((m) => {
+                const cals = mealCalories(meals[m.key]);
+                return (
+                  <View key={m.key} style={{ flex: 1, minWidth: 80, padding: 8, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 8 }}>
+                    <Text style={{ fontSize: 10, color: colors.muted }}>{m.emoji} {m.label}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: "700", marginTop: 2, color: cals > 0 ? colors.warn : colors.muted }}>
+                      {cals > 0 ? `${cals} kcal` : "—"}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* ═══ Semptom Metni ═══ */}
+      <View style={s.card}>
+        <Text style={s.cardTitle}>Semptom Metni</Text>
+        <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 10, lineHeight: 17 }}>
+          Bugün hissettiklerinizi yazın — AI semptomları otomatik tespit edecek.
+        </Text>
+
+        <TextInput
+          style={[s.textArea, { minHeight: 90 }]}
+          value={symptomText}
+          onChangeText={setSymptomText}
+          placeholder="Örnek: Sabahtan beri başım ağrıyor, midem bulanıyor..."
+          placeholderTextColor={colors.muted + "80"}
+          multiline
+          maxLength={2000}
+          textAlignVertical="top"
+        />
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+          <Text style={{ fontSize: 10, color: colors.muted }}>{symptomText.length}/2000</Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: colors.purple,
+              paddingHorizontal: 16,
+              paddingVertical: 9,
+              borderRadius: 8,
+              opacity: symptomAnalyzing || symptomText.trim().length < 3 ? 0.4 : 1,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+            }}
+            onPress={handleAnalyzeSymptom}
+            disabled={symptomAnalyzing || symptomText.trim().length < 3}
+            activeOpacity={0.8}
+          >
+            {symptomAnalyzing ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>AI ile Analiz Et</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {symptomError !== "" && (
+          <View style={{ backgroundColor: colors.accent3 + "14", borderWidth: 1, borderColor: colors.accent3 + "30", borderRadius: 8, padding: 12, marginTop: 10 }}>
+            <Text style={{ fontSize: 12, color: colors.accent3 }}>{symptomError}</Text>
+          </View>
+        )}
+
+        {symptomResult && !symptomAnalyzing && (
+          <View style={{ backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14, marginTop: 12 }}>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: colors.text, marginBottom: 8 }}>AI Semptom Analizi</Text>
+
+            {symptomResult.summary && (
+              <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18, marginBottom: 12 }}>{symptomResult.summary}</Text>
+            )}
+
+            {symptomResult.symptoms && symptomResult.symptoms.length > 0 && (
+              <View style={{ marginBottom: 10 }}>
+                <Text style={{ fontSize: 10, color: colors.muted, letterSpacing: 0.8, marginBottom: 6 }}>TESPİT EDİLEN SEMPTOMLAR</Text>
+                {symptomResult.symptoms.map((sym, i) => {
+                  const sevColor =
+                    sym.severity === "şiddetli" ? colors.accent3 :
+                    sym.severity === "orta" ? colors.warn :
+                    colors.accent4;
+                  return (
+                    <View key={i} style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 10, marginBottom: 6 }}>
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                        <Text style={{ fontSize: 12, fontWeight: "600", color: colors.text }}>{sym.name}</Text>
+                        {sym.severity && (
+                          <Text style={{ fontSize: 9, color: sevColor, fontWeight: "700", letterSpacing: 0.5, borderWidth: 1, borderColor: sevColor, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, textTransform: "uppercase" }}>
+                            {sym.severity}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={{ flexDirection: "row", gap: 12 }}>
+                        {sym.body_region && (
+                          <Text style={{ fontSize: 10, color: colors.muted }}>📍 {sym.body_region}</Text>
+                        )}
+                        {sym.duration && (
+                          <Text style={{ fontSize: 10, color: colors.muted }}>⏱ {sym.duration}</Text>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {symptomResult.suggested_categories && symptomResult.suggested_categories.length > 0 && (
+              <View>
+                <Text style={{ fontSize: 10, color: colors.muted, letterSpacing: 0.8, marginBottom: 6 }}>KATEGORİLER</Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                  {symptomResult.suggested_categories.map((cat, i) => (
+                    <Text key={i} style={{ fontSize: 10, color: colors.purple, fontWeight: "600", backgroundColor: colors.purple + "1A", borderWidth: 1, borderColor: colors.purple + "40", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                      {cat}
+                    </Text>
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       {/* ═══ Özet ═══ */}
