@@ -59,12 +59,17 @@ export const api = {
     request(`/health-data/${id}`, { method: "DELETE" }),
 
   // Image Analysis
-  uploadAndAnalyzeImage: async (file: File) => {
+  uploadAndAnalyzeImage: async (
+    file: File,
+    opts?: { mealType?: string; healthDataId?: number }
+  ) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
     const formData = new FormData();
     formData.append("file", file);
+    if (opts?.mealType) formData.append("meal_type", opts.mealType);
+    if (opts?.healthDataId !== undefined) formData.append("health_data_id", String(opts.healthDataId));
 
-    const res = await fetch(`${API_URL}/image-analysis`, {
+    const res = await fetch(`${API_URL}/image-analysis/`, {
       method: "POST",
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -89,10 +94,56 @@ export const api = {
     return res.json();
   },
 
+  bulkUploadAndAnalyzeImages: async (
+    files: File[],
+    opts?: { mealType?: string; healthDataId?: number }
+  ) => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    const formData = new FormData();
+    files.forEach((file) => formData.append("files", file));
+    if (opts?.mealType) formData.append("meal_type", opts.mealType);
+    if (opts?.healthDataId !== undefined) formData.append("health_data_id", String(opts.healthDataId));
+
+    const res = await fetch(`${API_URL}/image-analysis/bulk`, {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    if (res.status === 401) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        window.location.href = "/login";
+      }
+      throw new Error("Yetkisiz");
+    }
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.detail || "Toplu görsel analizi başarısız");
+    }
+
+    return res.json();
+  },
+
   getImageAnalyses: () => request("/image-analysis"),
 
   getImageAnalysis: (id: number) => request(`/image-analysis/${id}`),
 
   deleteImageAnalysis: (id: number) =>
     request(`/image-analysis/${id}`, { method: "DELETE" }),
+
+  // Symptoms
+  createSymptom: (data: { text: string; date?: string }) =>
+    request("/symptoms/", { method: "POST", body: JSON.stringify(data) }),
+
+  getSymptoms: () => request("/symptoms/"),
+
+  getSymptom: (id: number) => request(`/symptoms/${id}`),
+
+  deleteSymptom: (id: number) =>
+    request(`/symptoms/${id}`, { method: "DELETE" }),
 };

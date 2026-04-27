@@ -1,6 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
-const API_URL = "http://10.0.2.2:8000/api/v1"; // Android emulator → localhost
+// iOS simulator → localhost, Android emulator → 10.0.2.2
+const HOST = Platform.OS === "android" ? "10.0.2.2" : "localhost";
+const API_URL = `http://${HOST}:8000/api/v1`;
 
 async function request(endpoint: string, options: RequestInit = {}) {
   const token = await AsyncStorage.getItem("access_token");
@@ -56,7 +59,12 @@ export const api = {
     request(`/health-data/${id}`, { method: "DELETE" }),
 
   // Image Analysis
-  uploadAndAnalyzeImage: async (uri: string, fileName: string, mimeType: string) => {
+  uploadAndAnalyzeImage: async (
+    uri: string,
+    fileName: string,
+    mimeType: string,
+    opts?: { mealType?: string; healthDataId?: number },
+  ) => {
     const token = await AsyncStorage.getItem("access_token");
     const formData = new FormData();
     formData.append("file", {
@@ -64,8 +72,10 @@ export const api = {
       name: fileName,
       type: mimeType,
     } as unknown as Blob);
+    if (opts?.mealType) formData.append("meal_type", opts.mealType);
+    if (opts?.healthDataId !== undefined) formData.append("health_data_id", String(opts.healthDataId));
 
-    const res = await fetch(`${API_URL}/image-analysis`, {
+    const res = await fetch(`${API_URL}/image-analysis/`, {
       method: "POST",
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -87,10 +97,59 @@ export const api = {
     return res.json();
   },
 
+  bulkUploadAndAnalyzeImages: async (
+    images: { uri: string; fileName: string; mimeType: string }[],
+    opts?: { mealType?: string; healthDataId?: number },
+  ) => {
+    const token = await AsyncStorage.getItem("access_token");
+    const formData = new FormData();
+    images.forEach((img) => {
+      formData.append("files", {
+        uri: img.uri,
+        name: img.fileName,
+        type: img.mimeType,
+      } as unknown as Blob);
+    });
+    if (opts?.mealType) formData.append("meal_type", opts.mealType);
+    if (opts?.healthDataId !== undefined) formData.append("health_data_id", String(opts.healthDataId));
+
+    const res = await fetch(`${API_URL}/image-analysis/bulk`, {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    if (res.status === 401) {
+      await AsyncStorage.removeItem("access_token");
+      await AsyncStorage.removeItem("refresh_token");
+      throw new Error("Unauthorized");
+    }
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.detail || "Toplu görsel analizi başarısız");
+    }
+
+    return res.json();
+  },
+
   getImageAnalyses: () => request("/image-analysis"),
 
   getImageAnalysis: (id: number) => request(`/image-analysis/${id}`),
 
   deleteImageAnalysis: (id: number) =>
     request(`/image-analysis/${id}`, { method: "DELETE" }),
+
+  // Symptoms
+  createSymptom: (data: { text: string; date?: string }) =>
+    request("/symptoms/", { method: "POST", body: JSON.stringify(data) }),
+
+  getSymptoms: () => request("/symptoms/"),
+
+  getSymptom: (id: number) => request(`/symptoms/${id}`),
+
+  deleteSymptom: (id: number) =>
+    request(`/symptoms/${id}`, { method: "DELETE" }),
 };
