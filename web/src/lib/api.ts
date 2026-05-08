@@ -146,4 +146,22 @@ export const api = {
 
   deleteSymptom: (id: number) =>
     request(`/symptoms/${id}`, { method: "DELETE" }),
+
+  // AI Analysis
+  generateAIAnalysis: (data?: { date?: string; days_back?: number; include_rag?: boolean }) =>
+    request("/ai-analysis/generate", {
+      method: "POST",
+      body: JSON.stringify(data ?? {}),
+    }),
+
+  getAIAnalyses: (limit = 30) => request(`/ai-analysis/?limit=${limit}`),
+
+  getAIAnalysis: (id: number) => request(`/ai-analysis/${id}`),
+
+  deleteAIAnalysis: (id: number) =>
+    request(`/ai-analysis/${id}`, { method: "DELETE" }),
+
+  // Scientific (RAG)
+  searchScientific: (q: string, k = 5) =>
+    request(`/scientific/search?q=${encodeURIComponent(q)}&k=${k}`),
 };

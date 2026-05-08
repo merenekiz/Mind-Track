@@ -11,7 +11,7 @@ import AIInsight from "@/components/ui/AIInsight";
 import { EmptyState } from "@/components/ui/Section";
 import { Icon } from "@/components/ui/Icons";
 import { buildLocalInsight } from "@/services/insights";
-import type { HealthData, ImageAnalysis, Symptom } from "@/services/types";
+import type { HealthData, ImageAnalysis, Symptom, AIAnalysisResult } from "@/services/types";
 
 export default function RaporlarPage() {
   const { user } = useAuth();
@@ -19,22 +19,43 @@ export default function RaporlarPage() {
   const [images, setImages] = useState<ImageAnalysis[]>([]);
   const [symptoms, setSymptoms] = useState<Symptom[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aiAnalyses, setAIAnalyses] = useState<AIAnalysisResult[]>([]);
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [hd, img, sym] = await Promise.all([
+      const [hd, img, sym, ai] = await Promise.all([
         api.getHealthData().catch(() => []),
         api.getImageAnalyses().catch(() => []),
         api.getSymptoms().catch(() => []),
+        api.getAIAnalyses(10).catch(() => []),
       ]);
       setHealthData(hd || []);
       setImages(img || []);
       setSymptoms(sym || []);
+      setAIAnalyses(ai || []);
     } finally {
       setLoading(false);
     }
   }, []);
   useEffect(() => { if (user) load(); }, [user, load]);
+
+  const handleGenerateAI = async () => {
+    setGenError(null);
+    setGenerating(true);
+    try {
+      const result = await api.generateAIAnalysis({ days_back: 7, include_rag: true });
+      setAIAnalyses((prev) => [result, ...prev]);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "AI analizi üretilemedi";
+      setGenError(msg);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const latestAI = aiAnalyses[0];
 
   const insight = buildLocalInsight({ healthData, imageAnalyses: images, symptoms });
   const today = new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
@@ -66,9 +87,18 @@ export default function RaporlarPage() {
       title="Raporlar"
       subtitle="Sağlık verilerinizi doktorunuzla paylaşın"
       action={
-        <Button onClick={handleExport} iconLeft={<Icon.Document />}>
-          JSON İndir
-        </Button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Button
+            onClick={handleGenerateAI}
+            disabled={generating || (healthData.length === 0 && symptoms.length === 0)}
+            iconLeft={<Icon.Sparkle />}
+          >
+            {generating ? "AI üretiyor..." : "AI Bilimsel Rapor"}
+          </Button>
+          <Button onClick={handleExport} variant="ghost" iconLeft={<Icon.Document />}>
+            JSON
+          </Button>
+        </div>
       }
     >
       {loading ? null : healthData.length === 0 && symptoms.length === 0 ? (
@@ -93,9 +123,101 @@ export default function RaporlarPage() {
             </div>
           </Card>
 
-          {insight && (
+          {genError && (
+            <Card style={{ marginBottom: 16, borderColor: "var(--danger)" }}>
+              <p style={{ fontSize: 13, color: "var(--danger)" }}>{genError}</p>
+            </Card>
+          )}
+
+          {latestAI ? (
+            <Card style={{ marginBottom: 16 }}>
+              <CardHeader
+                title="AI Bilimsel Sağlık Yorumu"
+                subtitle={`${new Date(latestAI.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} · ${latestAI.data_used.health_count} sağlık kaydı, ${latestAI.data_used.symptom_count} belirti`}
+                icon={<Icon.Sparkle />}
+              />
+
+              <p style={{ fontSize: 14, color: "var(--mt-text)", lineHeight: 1.65, marginBottom: 16 }}>
+                {latestAI.summary}
+              </p>
+
+              {latestAI.recommendations.items?.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: "var(--mt-muted)", marginBottom: 10 }}>
+                    Öneriler
+                  </p>
+                  <ul style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {latestAI.recommendations.items.map((rec, i) => (
+                      <li key={i} style={{ padding: 12, background: "var(--mt-surface2)", borderRadius: 12, borderLeft: `3px solid ${rec.priority === "yüksek" ? "var(--danger)" : rec.priority === "orta" ? "var(--warning)" : "var(--mt-secondary)"}` }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--mt-text)" }}>{rec.title}</span>
+                          {rec.priority && (
+                            <Badge tone={rec.priority === "yüksek" ? "danger" : rec.priority === "orta" ? "warn" : "primary"}>
+                              {rec.priority}
+                            </Badge>
+                          )}
+                        </div>
+                        <p style={{ fontSize: 12, color: "var(--mt-text2)", lineHeight: 1.6 }}>{rec.detail}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {latestAI.recommendations.patterns && latestAI.recommendations.patterns.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: "var(--mt-muted)", marginBottom: 8 }}>
+                    Tespit Edilen Örüntüler
+                  </p>
+                  <ul style={{ paddingLeft: 16, display: "flex", flexDirection: "column", gap: 6 }}>
+                    {latestAI.recommendations.patterns.map((p, i) => (
+                      <li key={i} style={{ fontSize: 12, color: "var(--mt-text2)", lineHeight: 1.6 }}>{p}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {latestAI.recommendations.should_consult_doctor && (
+                <Card variant="gradient" style={{ marginBottom: 16, padding: 14 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "var(--warning)", marginBottom: 4 }}>
+                    ⚠️ Doktor Önerisi
+                  </p>
+                  <p style={{ fontSize: 12, color: "var(--mt-text)", lineHeight: 1.6 }}>
+                    {latestAI.recommendations.consult_reason || "Bu belirtiler için bir sağlık uzmanına danışmanız önerilir."}
+                  </p>
+                </Card>
+              )}
+
+              {latestAI.scientific_references?.items && latestAI.scientific_references.items.length > 0 && (
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: "var(--mt-muted)", marginBottom: 8 }}>
+                    Bilimsel Referanslar (PubMed)
+                  </p>
+                  <ul style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {latestAI.scientific_references.items.map((ref, i) => (
+                      <li key={i} style={{ fontSize: 12, color: "var(--mt-text2)", display: "flex", justifyContent: "space-between", gap: 8 }}>
+                        <a
+                          href={`https://pubmed.ncbi.nlm.nih.gov/${ref.pubmed_id}/`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: "var(--mt-secondary)", textDecoration: "underline", flex: 1 }}
+                        >
+                          {ref.title}
+                        </a>
+                        {typeof ref.similarity === "number" && (
+                          <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--mt-muted)" }}>
+                            %{(ref.similarity * 100).toFixed(0)}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Card>
+          ) : insight && (
             <div style={{ marginBottom: 16 }}>
-              <AIInsight data={insight} title="Genel Sağlık Değerlendirmesi" />
+              <AIInsight data={insight} title="Genel Sağlık Değerlendirmesi (Yerel)" />
             </div>
           )}
 
