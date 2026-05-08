@@ -245,7 +245,7 @@ npx react-native run-ios  # veya run-android
 ```env
 GEMINI_API_KEY=
 PUBMED_API_KEY=
-DATABASE_URL=postgresql://user:password@localhost:5432/mindtrack
+DATABASE_URL=
 JWT_SECRET=
 ```
 

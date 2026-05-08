@@ -76,3 +76,36 @@ export interface AIInsight {
   confidence?: number;
   sources?: { title: string; url?: string }[];
 }
+
+export interface AIRecommendationItem {
+  title: string;
+  detail: string;
+  priority?: "düşük" | "orta" | "yüksek" | string;
+}
+
+export interface AIScientificReference {
+  pubmed_id: string;
+  title: string;
+  similarity?: number;
+}
+
+export interface AIAnalysisResult {
+  id: number;
+  user_id: number;
+  date: string;
+  summary: string;
+  recommendations: {
+    items: AIRecommendationItem[];
+    patterns?: string[];
+    should_consult_doctor?: boolean;
+    consult_reason?: string | null;
+  };
+  scientific_references?: { items: AIScientificReference[] } | null;
+  data_used: {
+    period: { start: string; end: string };
+    health_count: number;
+    symptom_count: number;
+    nutrition_image_count: number;
+  };
+  created_at: string;
+}
