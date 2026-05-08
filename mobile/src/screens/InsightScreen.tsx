@@ -28,7 +28,9 @@ interface HealthData {
 
 type Msg = { role: "ai" | "user"; text: string };
 
-const SUGGESTIONS = ["Bu haftayı özetle", "Uyku eğilimim nasıl?", "Gevşeme rutini öner", "Yarını planla"];
+const SUGGESTIONS = ["Bilimsel rapor üret", "Uyku eğilimim nasıl?", "Gevşeme rutini öner", "Yarını planla"];
+
+const AI_REPORT_TRIGGERS = ["bilimsel rapor", "rapor üret", "rapor uret", "ai analiz", "kapsamlı analiz", "bütünsel"];
 
 export default function InsightScreen() {
   const { colors } = useTheme();
@@ -89,12 +91,50 @@ export default function InsightScreen() {
     ]);
   }, [loading, data, messages.length]);
 
-  const send = (text?: string) => {
+  const send = async (text?: string) => {
     const value = (text ?? input).trim();
     if (!value) return;
     setInput("");
     setMessages((m) => [...m, { role: "user", text: value }]);
     setThinking(true);
+
+    const lowered = value.toLowerCase();
+    const wantsAIReport = AI_REPORT_TRIGGERS.some((t) => lowered.includes(t));
+
+    if (wantsAIReport) {
+      try {
+        const result: any = await api.generateAIAnalysis({ days_back: 7, include_rag: true });
+        const lines: string[] = [];
+        lines.push("📋 Bilimsel Sağlık Raporu\n");
+        if (result?.summary) lines.push(result.summary);
+        const items = result?.recommendations?.items ?? [];
+        if (items.length > 0) {
+          lines.push("\n🎯 Öneriler:");
+          items.slice(0, 3).forEach((rec: any, i: number) => {
+            lines.push(`${i + 1}. ${rec.title}${rec.priority ? ` [${rec.priority}]` : ""}\n   ${rec.detail}`);
+          });
+        }
+        if (result?.recommendations?.should_consult_doctor) {
+          lines.push(`\n⚠️ ${result.recommendations.consult_reason || "Bir sağlık uzmanına danışmanız önerilir."}`);
+        }
+        const refs = result?.scientific_references?.items ?? [];
+        if (refs.length > 0) {
+          lines.push("\n📚 Bilimsel Referanslar (PubMed):");
+          refs.slice(0, 3).forEach((ref: any) => {
+            lines.push(`• ${ref.title} (PMID: ${ref.pubmed_id})`);
+          });
+        }
+        setMessages((m) => [...m, { role: "ai", text: lines.join("\n") }]);
+      } catch (e: any) {
+        const msg = e?.message || "AI raporu üretilemedi. Lütfen yeterli sağlık verisi olduğundan emin olun.";
+        setMessages((m) => [...m, { role: "ai", text: `⚠️ ${msg}` }]);
+      } finally {
+        setThinking(false);
+        setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
+      }
+      return;
+    }
+
     setTimeout(() => {
       const reply = generateReply(value, data);
       setMessages((m) => [...m, { role: "ai", text: reply }]);
