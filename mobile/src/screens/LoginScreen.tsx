@@ -11,7 +11,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Screen, Card, Button, Input, AIOrb } from "../components/ui";
+import { Screen, Card, Button, Input, Logo } from "../components/ui";
 import { spacing, type } from "../lib/theme";
 
 type Props = {
@@ -47,14 +47,16 @@ export default function LoginScreen({ navigation }: Props) {
     >
       <Screen>
         <View style={styles.brandWrap}>
-          <AIOrb size={72} />
-          <Text style={[type.h1, { color: colors.text, letterSpacing: -0.5, marginTop: spacing.base }]}>
-            Mind<Text style={{ color: colors.primaryLight }}>Track</Text>
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+            <Logo size={64} />
+            <Text style={[type.h1, { color: colors.text, letterSpacing: -0.5, fontSize: 30 }]}>
+              Mind<Text style={{ color: colors.primaryLight }}>Track</Text>
+            </Text>
+          </View>
           <Text
             style={[
               type.label,
-              { color: colors.text2, marginTop: spacing.xs },
+              { color: colors.text2, marginTop: spacing.sm },
             ]}
           >
             AI DESTEKLİ SAĞLIK GÜNLÜĞÜ

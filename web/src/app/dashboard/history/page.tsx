@@ -106,22 +106,33 @@ export default function HistoryPage() {
       <div className="lm-content flex-1 overflow-y-auto">
         {/* Search + filter chips */}
         <div className="lm-panel" style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: 14 }}>
-          <div style={{ flex: 1, minWidth: 240, position: "relative" }}>
-            <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--n-400)", display: "inline-flex" }}>
-              <Icon.Search width={14} height={14} />
-            </span>
+          <div
+            style={{
+              width: 260,
+              height: 36,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "0 12px",
+              borderRadius: 10,
+              background: "var(--n-800)",
+              border: "1px solid var(--n-700)",
+              color: "var(--n-400)",
+            }}
+          >
+            <Icon.Search width={14} height={14} style={{ flexShrink: 0 }} />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Kayıtlarda ara…"
               style={{
-                width: "100%",
-                height: 36,
-                borderRadius: "var(--r-md)",
-                padding: "0 14px 0 36px",
-                fontSize: 13,
-                background: "var(--n-800)",
-                border: "1px solid var(--n-700)",
+                flex: 1,
+                minWidth: 0,
+                height: "100%",
+                padding: 0,
+                fontSize: 12,
+                background: "transparent",
+                border: "none",
                 color: "var(--n-100)",
                 outline: "none",
               }}

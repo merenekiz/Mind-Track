@@ -79,4 +79,10 @@ export const Icon = {
   Brain: (p: SVGProps<SVGSVGElement>) => (
     <svg {...base(p)}><path d="M9 3a3 3 0 0 0-3 3v0a3 3 0 0 0-3 3v3a3 3 0 0 0 3 3v0a3 3 0 0 0 3 3h.5" /><path d="M15 3a3 3 0 0 1 3 3v0a3 3 0 0 1 3 3v3a3 3 0 0 1-3 3v0a3 3 0 0 1-3 3h-.5" /><path d="M12 3v18" /></svg>
   ),
+  HeartPulse: (p: SVGProps<SVGSVGElement>) => (
+    <svg {...base(p)}>
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="currentColor" stroke="none" />
+      <path d="M3.5 12h3l1.5-3 2 6 2-4.5 1.5 1.5h3" stroke="white" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
 };

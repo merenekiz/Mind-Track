@@ -18,6 +18,15 @@ export const metadata: Metadata = {
   title: "MindTrack — Akıllı Sağlık Günlüğü",
   description:
     "Somatik belirti ve duygu analizi yapan yapay zeka destekli sağlık takip platformu.",
+  icons: {
+    // Cache busting için ?v=3 query — tarayıcı eski favicon'u atar
+    icon: [
+      { url: "/icon.png?v=3", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/apple-icon.png?v=3", sizes: "180x180" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {

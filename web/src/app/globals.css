@@ -157,6 +157,24 @@
     radial-gradient(at 12% 18%, rgba(107,70,224,0.10) 0px, transparent 45%),
     radial-gradient(at 88% 12%, rgba(31,143,217,0.08) 0px, transparent 50%),
     radial-gradient(at 70% 90%, rgba(34,184,148,0.06) 0px, transparent 50%);
+
+  /* ─── Neutral scale (light theme — dark'ın tersi) ─── */
+  /* Bu değişkenler sidebar, topbar, search box, panel gibi yapısal elementlerde
+     kullanılıyor. Light temada da çalışsın diye dark'taki anlamlarına paralel
+     açık versiyonları tanımlıyoruz. */
+  --n-1000: #FFFFFF;
+  --n-950:  #FAFAFE;
+  --n-900:  #F5F5FA;
+  --n-850:  #EFEFF5;
+  --n-800:  #E8E8F0;
+  --n-700:  #D6D6E2;
+  --n-600:  #B8B8CC;
+  --n-500:  #8B8BA6;
+  --n-400:  #6B6B85;
+  --n-300:  #41415A;
+  --n-200:  #2B2B40;
+  --n-100:  #1A1A2A;
+  --n-50:   #0E0E1A;
 }
 
 @theme inline {
@@ -373,10 +391,16 @@ input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cur
   font-weight: 700; font-size: 16px; color: var(--n-100);
 }
 .lm-sidebar .brand .logo {
-  width: 32px; height: 32px; border-radius: 10px;
-  background: var(--mt-gradient-primary);
-  display: grid; place-items: center;
-  box-shadow: var(--mt-shadow-glow);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.lm-sidebar .brand .logo img {
+  height: 56px;
+  width: auto;
+  object-fit: contain;
 }
 .lm-nav-item {
   display: flex; align-items: center; gap: 10px;
@@ -448,17 +472,40 @@ input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cur
   color: var(--n-300);
 }
 .lm-icon-btn {
-  width: 36px; height: 36px;
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
   background: var(--n-800);
   border: 1px solid var(--n-700);
-  display: grid; place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--n-200);
   cursor: pointer;
   position: relative;
+  padding: 0;
+  margin: 0;
+  line-height: 0;
   transition: background 0.15s ease;
 }
 .lm-icon-btn:hover { background: var(--n-700); }
+.lm-icon-btn > svg {
+  display: block;
+  margin: 0 auto;
+  flex-shrink: 0;
+}
+.lm-icon-btn > .dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger, #FF5C7A);
+  border: 2px solid var(--n-800);
+  pointer-events: none;
+  box-sizing: border-box;
+}
 
 /* Content / panels */
 .lm-content {

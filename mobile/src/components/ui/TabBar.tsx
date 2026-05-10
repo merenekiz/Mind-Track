@@ -66,10 +66,10 @@ export function TabBar({ tabs, active, onChange }: Props) {
             >
               {isActive ? (
                 <View style={[styles.activeBg, shadows.glow, { backgroundColor: colors.primary }]}>
-                  <Text style={{ fontSize: 18, color: "#fff" }}>{t.glyph}</Text>
+                  <Text style={styles.tabGlyph}>{t.glyph}</Text>
                 </View>
               ) : (
-                <Text style={{ fontSize: 18, color: colors.text3 }}>{t.glyph}</Text>
+                <Text style={[styles.tabGlyph, { color: colors.text3 }]}>{t.glyph}</Text>
               )}
             </Pressable>
           );
@@ -109,5 +109,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
+  },
+  tabGlyph: {
+    fontSize: 18,
+    lineHeight: 22,
+    textAlign: "center",
+    color: "#fff",
   },
 });

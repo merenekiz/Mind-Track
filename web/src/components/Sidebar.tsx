@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { Icon } from "@/components/ui/Icons";
+import Logo from "@/components/ui/Logo";
 import { ReactNode } from "react";
 
 type NavItem = { href: string; label: string; icon: ReactNode };
@@ -59,11 +60,11 @@ export default function Sidebar() {
       {/* Brand */}
       <div className="brand">
         <div className="logo">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 18C5 14 7 11 12 11s7 3 7 7" />
-            <circle cx="12" cy="7" r="3" />
-            <path d="M9 18v3M15 18v3" />
-          </svg>
+          <Logo
+            variant="full"
+            size={56}
+            style={{ width: "auto", height: 56, objectFit: "contain" }}
+          />
         </div>
         MindTrack
       </div>
