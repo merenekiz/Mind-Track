@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Frontend görsellere mutlak URL üretirken kullanılır
+    PUBLIC_BACKEND_URL: str = "http://localhost:8000"
+
     class Config:
         env_file = ".env"
 

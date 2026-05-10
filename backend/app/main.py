@@ -1,7 +1,10 @@
+import logging
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.auth import router as auth_router
@@ -10,6 +13,7 @@ from app.api.image_analysis import router as image_analysis_router
 from app.api.symptom import router as symptom_router
 from app.api.scientific import router as scientific_router
 from app.api.ai_analysis import router as ai_analysis_router
+from app.api.ai_chat import router as ai_chat_router
 
 app = FastAPI(
     title="MindTrack API",
@@ -36,11 +40,25 @@ app.include_router(image_analysis_router, prefix="/api/v1/image-analysis", tags=
 app.include_router(symptom_router, prefix="/api/v1/symptoms", tags=["Symptoms"])
 app.include_router(scientific_router, prefix="/api/v1/scientific", tags=["Scientific (RAG)"])
 app.include_router(ai_analysis_router, prefix="/api/v1/ai-analysis", tags=["AI Analysis"])
+app.include_router(ai_chat_router, prefix="/api/v1/ai-chat", tags=["AI Chat"])
 
 # Yüklenen görsellere erişim için static file serving
 uploads_dir = Path("uploads/images")
 uploads_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+
+_log = logging.getLogger("mindtrack.validation")
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    body = await request.body()
+    _log.error(
+        "422 on %s %s — body=%s — errors=%s",
+        request.method, request.url.path, body.decode("utf-8", errors="replace")[:500], exc.errors(),
+    )
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
 @app.get("/")

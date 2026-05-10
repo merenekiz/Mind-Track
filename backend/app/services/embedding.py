@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from datetime import datetime, timezone
 
 import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
@@ -12,22 +13,52 @@ logger = logging.getLogger(__name__)
 
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
-# Gemini embedding modeli (free tier: ~1500 RPM)
-# gemini-embedding-001 doğal olarak 3072 boyutlu üretir; Matryoshka desteğiyle
-# output_dimensionality=768 vererek pgvector tablosuyla (Vector(768)) uyumlu boyut alıyoruz.
+# ═══ Gemini Embedding 1 — Free Tier limitleri ═══
+# Model: gemini-embedding-001
+# RPM: 100 · TPM: 30,000 · RPD: 1,000
+# 3072 boyutlu doğal çıktı; Matryoshka ile output_dimensionality=768 alıyoruz
+# (pgvector tablosuyla uyum için).
 EMBED_MODEL = "models/gemini-embedding-001"
 EMBED_DIM = 768
 
+# Limitlerin %90'ında çalış — burst toleransı için pay bırak
+RPM_LIMIT = 90        # 100'ün altı
+TPM_LIMIT = 27_000    # 30k'nın altı
+RPD_LIMIT = 900       # 1000'in altı
+
 _minute_requests: list[float] = []
-RPM_LIMIT = 100
+_minute_tokens: list[tuple[float, int]] = []  # (timestamp, token_count)
+_day_requests: list[float] = []
 
 
-def _check_rpm() -> int:
+def _approx_tokens(text: str) -> int:
+    """Kaba token tahmini: ~4 karakter = 1 token (Gemini için ortalama)."""
+    return max(1, len(text) // 4)
+
+
+def _check_limits(token_count: int) -> int:
+    """Tüm limitleri kontrol eder; aşıldıysa bekleme süresi (s) döner."""
     now = time.time()
+
+    # Eski kayıtları temizle
     _minute_requests[:] = [t for t in _minute_requests if now - t < 60]
+    _minute_tokens[:] = [(t, n) for t, n in _minute_tokens if now - t < 60]
+    _day_requests[:] = [t for t in _day_requests if now - t < 86400]
+
+    # RPD (günlük) — bunu aştıysak uzun bekleme gerekir, hata
+    if len(_day_requests) >= RPD_LIMIT:
+        oldest = _day_requests[0]
+        return max(int(86400 - (now - oldest) + 1), 60)
+
+    # RPM
     if len(_minute_requests) >= RPM_LIMIT:
-        wait = 60 - (now - _minute_requests[0]) + 1
-        return max(int(wait), 1)
+        return max(int(60 - (now - _minute_requests[0]) + 1), 1)
+
+    # TPM — gelen request token miktarı eklenince aşılır mı?
+    current_tpm = sum(n for _, n in _minute_tokens)
+    if current_tpm + token_count > TPM_LIMIT:
+        return max(int(60 - (now - _minute_tokens[0][0]) + 1), 1)
+
     return 0
 
 
@@ -45,18 +76,31 @@ async def embed_text(text: str, task_type: str = "RETRIEVAL_DOCUMENT") -> list[f
             detail="Gemini API anahtarı yapılandırılmamış",
         )
 
-    wait = _check_rpm()
+    truncated = text[:8000]
+    tokens = _approx_tokens(truncated)
+
+    wait = _check_limits(tokens)
     if wait > 0:
+        if wait > 300:
+            # Günlük kotaya yakın — hata fırlat, kullanıcı sonra denesin
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Günlük embedding kotasına yaklaşıldı ({len(_day_requests)}/{RPD_LIMIT}). Yarın tekrar deneyin.",
+            )
+        logger.info(f"Embedding rate limit, {wait}s bekleniyor...")
         await asyncio.sleep(wait)
 
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            _minute_requests.append(time.time())
+            now = time.time()
+            _minute_requests.append(now)
+            _minute_tokens.append((now, tokens))
+            _day_requests.append(now)
             result = await asyncio.to_thread(
                 genai.embed_content,
                 model=EMBED_MODEL,
-                content=text[:8000],
+                content=truncated,
                 task_type=task_type,
                 output_dimensionality=EMBED_DIM,
             )

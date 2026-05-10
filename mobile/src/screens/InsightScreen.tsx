@@ -139,12 +139,18 @@ export default function InsightScreen({ onBack }: Props = {}) {
       return;
     }
 
-    setTimeout(() => {
-      const reply = generateReply(value, data);
+    // Gerçek Gemini'ye gönder
+    try {
+      const result: any = await api.aiChat(value);
+      const reply = result?.reply || "Cevap üretilemedi.";
       setMessages((m) => [...m, { role: "ai", text: reply }]);
+    } catch (e: any) {
+      const msg = e?.message || "AI'ya ulaşılamadı.";
+      setMessages((m) => [...m, { role: "ai", text: `⚠️ ${msg}` }]);
+    } finally {
       setThinking(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
-    }, 700);
+    }
   };
 
   if (loading) {
@@ -309,47 +315,6 @@ export default function InsightScreen({ onBack }: Props = {}) {
       </View>
     </KeyboardAvoidingView>
   );
-}
-
-function generateReply(question: string, data: HealthData[]): string {
-  const q = question.toLowerCase();
-  const last7 = data.slice(0, 7);
-  const safeAvg = (k: keyof HealthData) => {
-    const v = last7.filter((d) => d[k] != null);
-    if (!v.length) return null;
-    return v.reduce((s, d) => s + (Number(d[k]) || 0), 0) / v.length;
-  };
-  const sleep = safeAvg("sleep_hours");
-  const stress = safeAvg("stress_level");
-  const pain = safeAvg("pain_level");
-
-  if (q.includes("uyku") || q.includes("uyu")) {
-    if (sleep == null) return "Henüz uyku verin yok. Birkaç gün uyku saatini kaydedersen kişisel yorum yapabilirim.";
-    if (sleep < 6) return `Son 7 günlük uyku ortalaman ${sleep.toFixed(1)} saat — ideal aralığın (7-9sa) altında. Yatma saatini sabitlemek ve ekran kullanımını yatmadan 1 saat önce bırakmak işe yarayabilir.`;
-    return `Uyku ortalaman ${sleep.toFixed(1)} saat — sağlıklı bir aralıkta. Süreklilik en az kadar süre kadar önemli.`;
-  }
-  if (q.includes("stres") || q.includes("rahat") || q.includes("gevşe")) {
-    if (stress == null) return "Stres verin yok. Birkaç gün kayıt eklersen daha kişisel öneri sunabilirim.";
-    if (stress >= 6) return `Stres ortalaman ${stress.toFixed(1)}/10 — yüksek bantta. 4-7-8 nefes (4sn nefes al, 7sn tut, 8sn ver) tekniğini günde 5 dakika denemek bilimsel olarak etkili bulunmuş.`;
-    return `Stres ortalaman ${stress.toFixed(1)}/10 — yönetilebilir aralıkta görünüyor.`;
-  }
-  if (q.includes("ağrı") || q.includes("baş")) {
-    if (pain == null) return "Ağrı verin yok.";
-    return `Ağrı ortalaman ${pain.toFixed(1)}/10. Ağrının zamanlamasını ve tetikleyicileri (yemek, uyku, ekran) not etmek kalıbı yakalamana yardımcı olur.`;
-  }
-  if (q.includes("özet") || q.includes("hafta")) {
-    const lines = [];
-    if (stress != null) lines.push(`stres ${stress.toFixed(1)}/10`);
-    if (sleep != null) lines.push(`uyku ${sleep.toFixed(1)}sa`);
-    if (pain != null) lines.push(`ağrı ${pain.toFixed(1)}/10`);
-    return lines.length
-      ? `Son haftanın özeti: ${lines.join(", ")}. ${stress != null && stress >= 6 ? "Stres yönetimine odaklanmak iyi olur." : "Genel görünümün dengeli."}`
-      : "Henüz haftalık özet için yeterli veri yok.";
-  }
-  if (q.includes("yarın") || q.includes("plan")) {
-    return "Yarın için 3 küçük öneri: 1) Yatma saatini bu gece 23:00'e sabitle. 2) Öğleden sonra 10 dk yürüyüş ekle. 3) Kafeini 14:00'ten önce bitir.";
-  }
-  return "İlginç bir soru. Daha kesin yorum için son birkaç günün verisine birlikte bakabiliriz — uyku, stres veya ağrı eğilimini sormak ister misin?";
 }
 
 const styles = StyleSheet.create({

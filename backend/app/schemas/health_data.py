@@ -1,10 +1,10 @@
 from pydantic import BaseModel, Field
-from datetime import date, datetime
+from datetime import date as date_type, datetime
 from typing import Optional, Any
 
 
 class HealthDataCreate(BaseModel):
-    date: date
+    date: date_type
     pain_level: Optional[int] = Field(None, ge=0, le=10)
     pain_type: Optional[str] = Field(None, max_length=50)
     pain_body_map: Optional[dict[str, Any]] = None
@@ -20,7 +20,7 @@ class HealthDataCreate(BaseModel):
 
 
 class HealthDataUpdate(BaseModel):
-    date: Optional[date] = None
+    date: Optional[date_type] = None
     pain_level: Optional[int] = Field(None, ge=0, le=10)
     pain_type: Optional[str] = Field(None, max_length=50)
     pain_body_map: Optional[dict[str, Any]] = None
@@ -38,7 +38,7 @@ class HealthDataUpdate(BaseModel):
 class HealthDataResponse(BaseModel):
     id: int
     user_id: int
-    date: date
+    date: date_type
     pain_level: Optional[int]
     pain_type: Optional[str]
     pain_body_map: Optional[dict[str, Any]]

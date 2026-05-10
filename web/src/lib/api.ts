@@ -29,11 +29,34 @@ async function request(endpoint: string, options: RequestInit = {}) {
   if (res.status === 204) return null;
 
   if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.detail || "Bir hata oluştu");
+    const error = await res.json().catch(() => ({}));
+    throw new Error(formatApiError(error, res.status));
   }
 
   return res.json();
+}
+
+function formatApiError(payload: unknown, status: number): string {
+  if (!payload || typeof payload !== "object") return `Sunucu hatası (${status})`;
+  const detail = (payload as { detail?: unknown }).detail;
+
+  // FastAPI 422 — detail bir array: [{loc, msg, type}, ...]
+  if (Array.isArray(detail)) {
+    return detail
+      .map((d: any) => {
+        if (typeof d === "string") return d;
+        if (d?.msg) {
+          const field = Array.isArray(d.loc) ? d.loc.slice(1).join(".") : null;
+          return field ? `${field}: ${d.msg}` : d.msg;
+        }
+        return JSON.stringify(d);
+      })
+      .join(" · ");
+  }
+
+  if (typeof detail === "string") return detail;
+  if (detail && typeof detail === "object") return JSON.stringify(detail);
+  return `Bir hata oluştu (${status})`;
 }
 
 export const api = {

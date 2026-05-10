@@ -216,7 +216,9 @@ export default function NewHealthDataPage() {
     setSymptomError("");
     setSymptomAnalyzing(true);
     try {
-      const result = await api.createSymptom({ text: symptomText.trim(), date });
+      const payload: { text: string; date?: string } = { text: symptomText.trim() };
+      if (date) payload.date = date;
+      const result = await api.createSymptom(payload);
       setSymptomResult(result.detected_symptoms);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Semptom analizi başarısız";
