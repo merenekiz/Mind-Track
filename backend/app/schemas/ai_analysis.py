@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date as date_type, datetime
 from typing import Any, Optional
 
 from pydantic import BaseModel, Field
@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 class GenerateAnalysisRequest(BaseModel):
     """AI analizi tetikleme isteği. Tarih verilmezse bugün kullanılır."""
-    date: Optional[date] = None
+    date: Optional[date_type] = None
     days_back: int = Field(7, ge=1, le=30, description="Geriye dönük kaç günün verileri analize dahil edilsin")
     include_rag: bool = True
 
@@ -26,7 +26,7 @@ class ScientificReference(BaseModel):
 class AIAnalysisResponse(BaseModel):
     id: int
     user_id: int
-    date: date
+    date: date_type
     summary: str
     recommendations: dict[str, Any]
     scientific_references: Optional[dict[str, Any]] = None
