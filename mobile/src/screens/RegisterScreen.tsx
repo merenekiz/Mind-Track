@@ -11,7 +11,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Screen, Card, Button, Input, AIOrb } from "../components/ui";
+import { Screen, Card, Button, Input, Logo } from "../components/ui";
 import { spacing, type } from "../lib/theme";
 
 type Props = {
@@ -57,9 +57,9 @@ export default function RegisterScreen({ navigation }: Props) {
     >
       <Screen>
         <View style={styles.brandWrap}>
-          <AIOrb size={64} />
+          <Logo size={80} />
           <Text style={[type.h2, { color: colors.text, letterSpacing: -0.5, marginTop: spacing.md }]}>
-            Mind<Text style={{ color: colors.primaryLight }}>Track</Text>'e Katıl
+            Hesap Oluştur
           </Text>
           <Text
             style={[type.body, { color: colors.text2, marginTop: 6, textAlign: "center" }]}

@@ -32,7 +32,12 @@ function fmtShort(s: string) {
   return new Date(s + "T00:00:00").toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
 }
 
-export default function AnalyticsScreen() {
+interface Props {
+  onBack?: () => void;
+  onOpenSettings?: () => void;
+}
+
+export default function AnalyticsScreen({ onBack, onOpenSettings }: Props = {}) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [data, setData] = useState<HealthData[]>([]);
@@ -81,13 +86,27 @@ export default function AnalyticsScreen() {
     <View style={[styles.root, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
       {/* App-bar */}
       <View style={styles.appBar}>
-        <View style={[styles.iconBtn, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
-          <Text style={{ color: colors.text2, fontSize: 16 }}>‹</Text>
-        </View>
+        <Pressable
+          onPress={onBack}
+          style={({ pressed }) => [
+            styles.iconBtn,
+            { backgroundColor: colors.surface2, borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+          ]}
+          hitSlop={8}
+        >
+          <Text style={{ color: colors.text2, fontSize: 18, fontWeight: "600" }}>‹</Text>
+        </Pressable>
         <Text style={[styles.appBarTitle, { color: colors.text }]}>{cfg.label} trendi</Text>
-        <View style={[styles.iconBtn, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
+        <Pressable
+          onPress={onOpenSettings}
+          style={({ pressed }) => [
+            styles.iconBtn,
+            { backgroundColor: colors.surface2, borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+          ]}
+          hitSlop={8}
+        >
           <Text style={{ color: colors.text2, fontSize: 14 }}>⚙</Text>
-        </View>
+        </Pressable>
       </View>
 
       <ScrollView

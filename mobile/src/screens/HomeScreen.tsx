@@ -19,20 +19,14 @@ interface HealthData {
 
 interface Props {
   onOpenNew: () => void;
+  onSwitchTab?: (key: string) => void;
 }
-
-const QUICK_ACTIONS: { glyph: string; label: string; tone: string }[] = [
-  { glyph: "💧", label: "Su", tone: "secondary" },
-  { glyph: "🍲", label: "Öğün", tone: "warn" },
-  { glyph: "🌿", label: "Nefes", tone: "success" },
-  { glyph: "🎙", label: "Sesli", tone: "primaryLight" },
-];
 
 function formatLongDate(d: Date) {
   return d.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" });
 }
 
-export default function HomeScreen({ onOpenNew }: Props) {
+export default function HomeScreen({ onOpenNew, onSwitchTab }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { colors } = useTheme();
@@ -129,7 +123,9 @@ export default function HomeScreen({ onOpenNew }: Props) {
         {/* Bugünün Özeti */}
         <View style={styles.sectionHead}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Bugünün Özeti</Text>
-          <Text style={[styles.more, { color: colors.primaryLight }]}>Tümü →</Text>
+          <Pressable onPress={() => onSwitchTab?.("analytics")} hitSlop={8}>
+            <Text style={[styles.more, { color: colors.primaryLight }]}>Tümü →</Text>
+          </Pressable>
         </View>
 
         <View style={styles.statGrid}>
@@ -151,26 +147,10 @@ export default function HomeScreen({ onOpenNew }: Props) {
             <Text style={[styles.insightHeadTxt, { color: colors.primaryLight }]}>MINDTRACK FARK ETTİ</Text>
           </View>
           <Text style={[styles.insightBody, { color: colors.text2 }]}>{insightText}</Text>
-          <Pressable>
+          <Pressable onPress={() => onSwitchTab?.("insight")} hitSlop={8}>
             <Text style={[styles.insightLink, { color: colors.primaryLight }]}>Önerilen rutini gör →</Text>
           </Pressable>
           <View pointerEvents="none" style={[styles.insightGlow, { backgroundColor: colors.primary + "33" }]} />
-        </View>
-
-        {/* Hızlı kayıt */}
-        <View style={styles.sectionHead}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Hızlı kayıt</Text>
-        </View>
-        <View style={[styles.quickCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          {QUICK_ACTIONS.map((q) => {
-            const tint = (colors as any)[q.tone] || colors.primary;
-            return (
-              <Pressable key={q.label} onPress={onOpenNew} style={[styles.quickItem, { backgroundColor: colors.surface2 }]}>
-                <Text style={{ fontSize: 18, color: tint }}>{q.glyph}</Text>
-                <Text style={[styles.quickLabel, { color: colors.text3 }]}>{q.label}</Text>
-              </Pressable>
-            );
-          })}
         </View>
 
         {/* Son aktivite (varsa) */}
@@ -178,7 +158,9 @@ export default function HomeScreen({ onOpenNew }: Props) {
           <>
             <View style={styles.sectionHead}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Son aktivite</Text>
-              <Text style={[styles.more, { color: colors.primaryLight }]}>Tümü →</Text>
+              <Pressable onPress={() => onSwitchTab?.("analytics")} hitSlop={8}>
+                <Text style={[styles.more, { color: colors.primaryLight }]}>Tümü →</Text>
+              </Pressable>
             </View>
             <View style={{ gap: spacing.sm }}>
               {recent.slice(-3).reverse().map((r) => {

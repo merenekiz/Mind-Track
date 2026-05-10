@@ -7,6 +7,7 @@ export { Chip } from "./Chip";
 export { Section } from "./Section";
 export { AIInsight } from "./AIInsight";
 export { AIOrb } from "./AIOrb";
+export { Logo } from "./Logo";
 export { BarChart, Sparkline, ProgressBar } from "./Charts";
 export { Icon } from "./Icon";
 export { Input } from "./Input";

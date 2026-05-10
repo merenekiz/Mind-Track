@@ -32,7 +32,11 @@ const SUGGESTIONS = ["Bilimsel rapor üret", "Uyku eğilimim nasıl?", "Gevşeme
 
 const AI_REPORT_TRIGGERS = ["bilimsel rapor", "rapor üret", "rapor uret", "ai analiz", "kapsamlı analiz", "bütünsel"];
 
-export default function InsightScreen() {
+interface Props {
+  onBack?: () => void;
+}
+
+export default function InsightScreen({ onBack }: Props = {}) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
@@ -160,9 +164,16 @@ export default function InsightScreen() {
       <View style={{ paddingTop: insets.top, flex: 1 }}>
         {/* App-bar with AI identity */}
         <View style={styles.appBar}>
-          <View style={[styles.iconBtn, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
-            <Text style={{ color: colors.text2, fontSize: 16 }}>‹</Text>
-          </View>
+          <Pressable
+            onPress={onBack}
+            style={({ pressed }) => [
+              styles.iconBtn,
+              { backgroundColor: colors.surface2, borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+            ]}
+            hitSlop={8}
+          >
+            <Text style={{ color: colors.text2, fontSize: 18, fontWeight: "600" }}>‹</Text>
+          </Pressable>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <View style={[styles.aiAvatar, shadows.glow, { backgroundColor: colors.primary }]}>
               <Text style={{ fontSize: 14, color: "#fff" }}>✦</Text>
@@ -174,9 +185,19 @@ export default function InsightScreen() {
               </Text>
             </View>
           </View>
-          <View style={[styles.iconBtn, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
-            <Text style={{ color: colors.text2, fontSize: 14 }}>⋯</Text>
-          </View>
+          <Pressable
+            onPress={() => {
+              setMessages([]);
+              setInput("");
+            }}
+            style={({ pressed }) => [
+              styles.iconBtn,
+              { backgroundColor: colors.surface2, borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+            ]}
+            hitSlop={8}
+          >
+            <Text style={{ color: colors.text2, fontSize: 16 }}>↻</Text>
+          </Pressable>
         </View>
 
         <ScrollView
@@ -261,8 +282,12 @@ export default function InsightScreen() {
           pointerEvents="box-none"
         >
           <View style={[styles.inputBar, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
-            <Pressable style={[styles.inputIcon, { backgroundColor: "transparent" }]}>
-              <Text style={{ color: colors.text3, fontSize: 16 }}>+</Text>
+            <Pressable
+              onPress={() => send("Bilimsel rapor üret")}
+              hitSlop={6}
+              style={[styles.inputIcon, { backgroundColor: colors.primary + "26" }]}
+            >
+              <Text style={{ color: colors.primaryLight, fontSize: 16, fontWeight: "700" }}>+</Text>
             </Pressable>
             <TextInput
               value={input}
@@ -273,9 +298,6 @@ export default function InsightScreen() {
               returnKeyType="send"
               style={{ flex: 1, color: colors.text, fontSize: 13, paddingVertical: 8 }}
             />
-            <Pressable style={[styles.inputIcon, { backgroundColor: colors.surface3 }]}>
-              <Text style={{ color: colors.text2, fontSize: 13 }}>🎙</Text>
-            </Pressable>
             <Pressable
               onPress={() => send()}
               style={[styles.sendBtn, shadows.glow, { backgroundColor: colors.primary }]}

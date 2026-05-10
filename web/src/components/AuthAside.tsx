@@ -1,4 +1,6 @@
 // Shared brand panel — Login + Register sol kolonu
+import { Icon } from "./ui/Icons";
+import Logo from "./ui/Logo";
 
 const FEATURES = [
   {
@@ -14,12 +16,7 @@ const FEATURES = [
   {
     title: "AI Destekli Yorum",
     desc: "Gemini Vision ve metin analiziyle semptomlarınız anlamlandırılır.",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" />
-        <circle cx="12" cy="12" r="4" />
-      </svg>
-    ),
+    icon: <Icon.Sparkle width={20} height={20} />,
   },
   {
     title: "Bilimsel Kaynaklarla",
@@ -69,24 +66,11 @@ export default function AuthAside() {
       <div style={{ width: "100%", maxWidth: 460, padding: "0 48px", position: "relative" }}>
         {/* Logo lockup */}
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 32 }}>
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: 14,
-              background: "var(--mt-gradient-primary)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              boxShadow: "var(--mt-shadow-glow)",
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 3a4 4 0 0 0-4 4v0a4 4 0 0 0-4 4v3a4 4 0 0 0 4 4v0a4 4 0 0 0 4 4" />
-              <path d="M12 3a4 4 0 0 1 4 4v0a4 4 0 0 1 4 4v3a4 4 0 0 1-4 4v0a4 4 0 0 1-4 4" />
-            </svg>
-          </div>
+          <Logo
+            variant="full"
+            size={96}
+            style={{ width: "auto", height: 96, objectFit: "contain" }}
+          />
           <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--mt-text)" }}>
             Mind<span className="mt-text-grad-ai">Track</span>
           </h1>

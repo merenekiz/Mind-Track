@@ -38,13 +38,8 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile card */}
-        <View
-          style={[
-            styles.profileCard,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-        >
+        {/* Profil */}
+        <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={[styles.avatar, shadows.glow, { backgroundColor: colors.primary }]}>
             <Text style={styles.avatarTxt}>{initial}</Text>
           </View>
@@ -56,21 +51,20 @@ export default function SettingsScreen() {
               {user?.email}
             </Text>
           </View>
-          <View
-            style={[
-              styles.activeChip,
-              { backgroundColor: colors.success + "26", borderColor: colors.success + "55" },
-            ]}
-          >
+          <View style={[styles.activeChip, { backgroundColor: colors.success + "26", borderColor: colors.success + "55" }]}>
             <Text style={[styles.activeChipTxt, { color: colors.success }]}>AKTİF</Text>
           </View>
         </View>
 
-        <SectionTitle text="GÖRÜNÜM" colors={colors} />
+        {/* GÖRÜNÜM */}
+        <Text style={[styles.sectionTitle, { color: colors.text3 }]}>GÖRÜNÜM</Text>
         <View style={[styles.group, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Row
+          <SettingRow
+            colors={colors}
+            iconBg={colors.primary + "26"}
+            iconColor={colors.primary}
             glyph={theme === "dark" ? "🌙" : "☀️"}
-            title="Karanlık mod"
+            title="Karanlık Mod"
             subtitle={theme === "dark" ? "Açık" : "Kapalı"}
             right={
               <Switch
@@ -81,41 +75,80 @@ export default function SettingsScreen() {
                 style={styles.switch}
               />
             }
-            colors={colors}
           />
         </View>
 
-        <SectionTitle text="UYGULAMA" colors={colors} />
+        {/* UYGULAMA */}
+        <Text style={[styles.sectionTitle, { color: colors.text3 }]}>UYGULAMA</Text>
         <View style={[styles.group, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Row
+          <SettingRow
+            colors={colors}
+            iconBg={colors.warn + "26"}
+            iconColor={colors.warn}
             glyph="🔔"
             title="Bildirimler"
-            right={<Tag text="Yakında" color={colors.text3} bg={colors.surface3} />}
-            colors={colors}
+            subtitle="Yakında aktif"
+            right={
+              <View style={[styles.tag, { backgroundColor: colors.surface3 }]}>
+                <Text style={[styles.tagTxt, { color: colors.text3 }]}>Yakında</Text>
+              </View>
+            }
           />
           <Divider colors={colors} />
-          <Row glyph="🌐" title="Dil" subtitle="Türkçe" colors={colors} />
+          <SettingRow
+            colors={colors}
+            iconBg={colors.secondary + "26"}
+            iconColor={colors.secondary}
+            glyph="🌐"
+            title="Dil"
+            subtitle="Türkçe"
+            right={<Text style={[styles.chev, { color: colors.text3 }]}>›</Text>}
+          />
           <Divider colors={colors} />
-          <Row glyph="📦" title="Veri senkronizasyonu" subtitle="Otomatik" colors={colors} />
+          <SettingRow
+            colors={colors}
+            iconBg={colors.success + "26"}
+            iconColor={colors.success}
+            glyph="📦"
+            title="Veri Senkronizasyonu"
+            subtitle="Otomatik"
+            right={<Text style={[styles.chev, { color: colors.text3 }]}>›</Text>}
+          />
         </View>
 
-        <SectionTitle text="HAKKINDA" colors={colors} />
+        {/* HAKKINDA */}
+        <Text style={[styles.sectionTitle, { color: colors.text3 }]}>HAKKINDA</Text>
         <View style={[styles.group, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Row
+          <SettingRow
+            colors={colors}
+            iconBg={colors.secondary + "26"}
+            iconColor={colors.secondary}
             glyph="📄"
-            title="Gizlilik politikası"
+            title="Gizlilik Politikası"
+            subtitle="Verileriniz nasıl korunuyor"
             onPress={() => Linking.openURL("https://example.com/privacy").catch(() => {})}
-            colors={colors}
+            right={<Text style={[styles.chev, { color: colors.text3 }]}>›</Text>}
           />
           <Divider colors={colors} />
-          <Row
+          <SettingRow
+            colors={colors}
+            iconBg={colors.primary + "26"}
+            iconColor={colors.primary}
             glyph="📑"
-            title="Kullanım koşulları"
+            title="Kullanım Koşulları"
+            subtitle="Hizmet şartları"
             onPress={() => Linking.openURL("https://example.com/terms").catch(() => {})}
-            colors={colors}
+            right={<Text style={[styles.chev, { color: colors.text3 }]}>›</Text>}
           />
           <Divider colors={colors} />
-          <Row glyph="🧠" title="Versiyon" subtitle="MindTrack 1.0.0" colors={colors} />
+          <SettingRow
+            colors={colors}
+            iconBg={colors.danger + "26"}
+            iconColor={colors.danger}
+            glyph="ℹ"
+            title="Versiyon"
+            subtitle="Mind Track 1.0.0"
+          />
         </View>
 
         <Pressable
@@ -133,83 +166,71 @@ export default function SettingsScreen() {
         </Pressable>
 
         <Text style={[styles.disclaimer, { color: colors.muted }]}>
-          Bu uygulama tıbbi tanı koymaz. Sonuçlar bilgilendirme amaçlıdır.
+          Bu uygulama tıbbi tanı koymaz.{"\n"}Sonuçlar bilgilendirme amaçlıdır.
         </Text>
       </ScrollView>
     </View>
   );
 }
 
-function SectionTitle({ text, colors }: { text: string; colors: any }) {
-  return (
-    <Text style={[styles.sectionTitle, { color: colors.text3 }]}>{text}</Text>
-  );
-}
-
+// ─── SettingRow ──────────────────────────────────────────────────
+// Tek satır: [icon kutusu]  [title + subtitle]  [right element]
+// Sabit minHeight, yatay flex, hiçbir element taşmaz
 interface RowProps {
+  colors: any;
+  iconBg: string;
+  iconColor: string;
   glyph: string;
   title: string;
   subtitle?: string;
   right?: React.ReactNode;
   onPress?: () => void;
-  colors: any;
 }
 
-function Row({ glyph, title, subtitle, right, onPress, colors }: RowProps) {
-  const Wrapper: any = onPress ? Pressable : View;
-  return (
-    <Wrapper
-      onPress={onPress}
-      style={({ pressed }: { pressed?: boolean }) => [
-        styles.row,
-        { opacity: pressed ? 0.7 : 1 },
-      ]}
-    >
-      <View
-        style={[
-          styles.rowIcon,
-          { backgroundColor: colors.surface2, borderColor: colors.border },
-        ]}
-      >
-        <Text style={styles.rowGlyph}>{glyph}</Text>
+function SettingRow({ colors, iconBg, iconColor, glyph, title, subtitle, right, onPress }: RowProps) {
+  const content = (
+    <>
+      <View style={[styles.iconBox, { backgroundColor: iconBg }]}>
+        <Text style={[styles.iconGlyph, { color: iconColor }]} allowFontScaling={false}>
+          {glyph}
+        </Text>
       </View>
-      <View style={styles.rowText}>
-        <Text style={[styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
+      <View style={styles.textCol}>
+        <Text style={[styles.titleTxt, { color: colors.text }]} numberOfLines={1}>
           {title}
         </Text>
         {subtitle ? (
-          <Text style={[styles.rowSubtitle, { color: colors.text3 }]} numberOfLines={1}>
+          <Text style={[styles.subtitleTxt, { color: colors.text3 }]} numberOfLines={1}>
             {subtitle}
           </Text>
         ) : null}
       </View>
-      <View style={styles.rowRight}>
-        {right ?? (onPress ? <Text style={[styles.chev, { color: colors.text3 }]}>›</Text> : null)}
-      </View>
-    </Wrapper>
+      {right ? <View style={styles.rightCol}>{right}</View> : null}
+    </>
   );
+
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        android_ripple={{ color: colors.surface3 }}
+        style={({ pressed }) => [styles.row, pressed && { opacity: 0.6 }]}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+  return <View style={styles.row}>{content}</View>;
 }
 
 function Divider({ colors }: { colors: any }) {
   return <View style={[styles.divider, { backgroundColor: colors.border }]} />;
 }
 
-function Tag({ text, color, bg }: { text: string; color: string; bg: string }) {
-  return (
-    <View style={[styles.tag, { backgroundColor: bg }]}>
-      <Text style={[styles.tagTxt, { color }]}>{text}</Text>
-    </View>
-  );
-}
+const ROW_PADDING_X = 14;
+const ICON_SIZE = 32;
+const ICON_GAP = 12;
 
-// Spacing scale (tutarlı dikey ritim):
-//  - appBar bottom    -> 12
-//  - profile padding  -> 16
-//  - profile -> section title    -> 20
-//  - section title -> group      -> 8
-//  - group -> next section title -> 20
-//  - last group -> logout        -> 24
-//  - logout -> disclaimer        -> 16
 const styles = StyleSheet.create({
   root: { flex: 1 },
   appBar: {
@@ -224,99 +245,141 @@ const styles = StyleSheet.create({
     paddingBottom: 140,
   },
 
-  // Profile
+  // Profil kartı
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 20,
+    padding: 16,
     borderRadius: radius.lg,
     borderWidth: 1,
-    ...shadows.card,
   },
   avatar: {
-    width: 60,
-    height: 60,
+    width: 52,
+    height: 52,
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarTxt: { color: "#fff", fontSize: 24, fontWeight: "700" },
-  profileInfo: { flex: 1, minWidth: 0, marginLeft: 16 },
+  avatarTxt: { color: "#fff", fontSize: 22, fontWeight: "700" },
+  profileInfo: { flex: 1, minWidth: 0, marginLeft: 14 },
   name: { fontSize: 16, fontWeight: "700", letterSpacing: -0.2 },
-  email: { fontSize: 13, marginTop: 4 },
+  email: { fontSize: 12, marginTop: 3 },
   activeChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: radius.full,
     borderWidth: 1,
-    marginLeft: 10,
+    marginLeft: 8,
   },
   activeChipTxt: { fontSize: 10, fontWeight: "700", letterSpacing: 1 },
 
-  // Section title (kart üstü etiket)
+  // Section title
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 1.4,
+    letterSpacing: 1.5,
     marginTop: 24,
-    marginBottom: 10,
-    marginLeft: 6,
+    marginBottom: 8,
+    marginLeft: 14,
   },
 
-  // Group (kart)
+  // Group
   group: {
     borderRadius: radius.lg,
     borderWidth: 1,
     overflow: "hidden",
   },
+
+  // Row — yatay flex, sabit minimum yükseklik
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-    minHeight: 76,
+    minHeight: 64,
+    paddingHorizontal: ROW_PADDING_X,
+    paddingVertical: 12,
   },
-  rowIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.full,
-    borderWidth: 1,
+
+  // Icon kutusu — sabit kare, içerik tam ortada
+  iconBox: {
+    width: ICON_SIZE,
+    height: ICON_SIZE,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
-  rowGlyph: { fontSize: 16, lineHeight: 18, textAlign: "center" },
-  rowText: { flex: 1, minWidth: 0, marginLeft: 14 },
-  rowTitle: { fontSize: 15, fontWeight: "600", letterSpacing: -0.1 },
-  rowSubtitle: { fontSize: 12, marginTop: 3 },
-  rowRight: { marginLeft: 10, alignItems: "flex-end", justifyContent: "center" },
-  chev: { fontSize: 22, lineHeight: 22, fontWeight: "300" },
-  switch: { transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] },
+  iconGlyph: {
+    fontSize: 17,
+    lineHeight: 20,
+    textAlign: "center",
+    includeFontPadding: false,
+  },
+
+  // Text column — flex 1, taşmaz
+  textCol: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: ICON_GAP,
+    justifyContent: "center",
+  },
+  titleTxt: {
+    fontSize: 15,
+    fontWeight: "500",
+    letterSpacing: -0.1,
+  },
+  subtitleTxt: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  // Right column — sabit min genişlik, taşmaz
+  rightCol: {
+    marginLeft: 8,
+    flexShrink: 0,
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
+  chev: {
+    fontSize: 22,
+    lineHeight: 22,
+    fontWeight: "300",
+  },
+  switch: {
+    transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }],
+  },
+
+  // Divider — icon hizasından sonra
   divider: {
     height: StyleSheet.hairlineWidth,
-    marginLeft: 76,
+    marginLeft: ROW_PADDING_X + ICON_SIZE + ICON_GAP, // 14 + 32 + 12 = 58
   },
 
-  // Tag
+  // Tag (Yakında)
   tag: {
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 3,
     borderRadius: radius.full,
   },
-  tagTxt: { fontSize: 10, fontWeight: "600", letterSpacing: 0.4 },
+  tagTxt: {
+    fontSize: 10,
+    fontWeight: "600",
+    letterSpacing: 0.4,
+  },
 
-  // Logout + disclaimer
+  // Logout
   logoutBtn: {
     marginTop: 28,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: radius.full,
     borderWidth: 1,
     alignItems: "center",
   },
   logoutTxt: { fontSize: 15, fontWeight: "600", letterSpacing: -0.1 },
+
   disclaimer: {
     fontSize: 11,
     textAlign: "center",
-    marginTop: 20,
+    marginTop: 16,
     lineHeight: 16,
     paddingHorizontal: 16,
   },

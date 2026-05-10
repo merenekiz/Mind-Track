@@ -231,7 +231,7 @@ export default function DashboardPage() {
             <div className="label"><Icon.Moon width={11} height={11} /> Uyku ort.</div>
             <div className="value">
               {avgSleep !== null ? avgSleep.toFixed(1) : "—"}
-              <span style={{ fontSize: 14, color: "var(--n-400)" }}>sa</span>
+              <span style={{ fontSize: 14, color: "var(--n-400)" }}> saat</span>
             </div>
             <div className={`delta ${sleepDelta !== null && sleepDelta < 0 ? "down" : "up"}`}>
               {sleepDelta !== null ? `${sleepDelta > 0 ? "+" : ""}%${Math.abs(sleepDelta).toFixed(0)} (geçen hafta)` : "Veri yok"}
@@ -253,7 +253,7 @@ export default function DashboardPage() {
             <div className="label"><Icon.Notebook width={11} height={11} /> Seri</div>
             <div className="value success">
               {healthData.length}
-              <span style={{ fontSize: 14, color: "var(--n-400)" }}>g</span>
+              <span style={{ fontSize: 14, color: "var(--n-400)", marginLeft: 4 }}>gün</span>
             </div>
             <div className="delta up">Toplam kayıt</div>
           </div>

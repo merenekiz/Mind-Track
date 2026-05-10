@@ -11,11 +11,11 @@ import SettingsScreen from "./SettingsScreen";
 type Props = { navigation: NativeStackNavigationProp<any> };
 
 const TABS: TabItem[] = [
-  { key: "home", glyph: "⌂" },
-  { key: "analytics", glyph: "▤" },
+  { key: "home", glyph: "🏠" },
+  { key: "analytics", glyph: "📊" },
   { key: "fab", glyph: "+", fab: true },
-  { key: "insight", glyph: "✦" },
-  { key: "settings", glyph: "⚙" },
+  { key: "insight", glyph: "✨" },
+  { key: "settings", glyph: "⚙️" },
 ];
 
 export default function MainTabsScreen({ navigation }: Props) {
@@ -33,9 +33,14 @@ export default function MainTabsScreen({ navigation }: Props) {
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <View style={{ flex: 1 }}>
-        {active === "home" && <HomeScreen onOpenNew={() => navigation.navigate("NewHealthData")} />}
-        {active === "analytics" && <AnalyticsScreen />}
-        {active === "insight" && <InsightScreen />}
+        {active === "home" && (
+          <HomeScreen
+            onOpenNew={() => navigation.navigate("NewHealthData")}
+            onSwitchTab={(key) => setActive(key)}
+          />
+        )}
+        {active === "analytics" && <AnalyticsScreen onBack={() => setActive("home")} onOpenSettings={() => setActive("settings")} />}
+        {active === "insight" && <InsightScreen onBack={() => setActive("home")} />}
         {active === "settings" && <SettingsScreen />}
       </View>
 
