@@ -191,7 +191,7 @@ export default function HistoryPage() {
                 {filtered.length} / {data.length}
               </span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div className="mt-scrollable-list" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {filtered.map((record) => (
                 <div key={record.id} style={{
                   padding: 14,

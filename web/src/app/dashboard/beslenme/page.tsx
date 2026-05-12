@@ -145,7 +145,7 @@ export default function BeslenmePage() {
                   {todayItems.length} kayıt
                 </span>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="mt-scrollable-list mt-scrollable-list-sm" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {MEAL_ORDER.map((mt) => {
                   const meals = mealsByType[mt] || [];
                   const cal = meals.reduce((s, m) => s + (m.analysis_result?.estimated_calories ?? 0), 0);
@@ -200,7 +200,7 @@ export default function BeslenmePage() {
                   {items.length} toplam
                 </span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
+              <div className="mt-scrollable-list" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
                 {[...items].reverse().map((img) => {
                   const r = img.analysis_result || {};
                   return (
