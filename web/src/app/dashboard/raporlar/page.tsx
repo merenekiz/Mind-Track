@@ -181,7 +181,7 @@ export default function RaporlarPage() {
               </p>
 
               {latestAI.recommendations.items?.length > 0 && (
-                <ul style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <ul className="mt-scrollable-list" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {latestAI.recommendations.items.map((rec, i) => (
                     <li
                       key={i}
@@ -211,7 +211,7 @@ export default function RaporlarPage() {
                   <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: "var(--mt-muted)", marginBottom: 8 }}>
                     Bilimsel Referanslar (PubMed)
                   </p>
-                  <ul style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <ul className="mt-scrollable-list mt-scrollable-list-sm" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {latestAI.scientific_references.items.map((ref, i) => (
                       <li key={i} style={{ fontSize: 12, display: "flex", justifyContent: "space-between", gap: 8 }}>
                         <a

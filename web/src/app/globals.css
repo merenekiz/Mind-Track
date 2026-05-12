@@ -861,3 +861,34 @@ input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cur
   width: 18px; height: 18px; border-radius: 50%; background: #fff;
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
+
+/* ═══ Scrollable list — uzun listeleri sınırlı yükseklikte göster ═══ */
+.mt-scrollable-list {
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  margin-right: -6px;
+}
+.mt-scrollable-list::-webkit-scrollbar {
+  width: 8px;
+}
+.mt-scrollable-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.mt-scrollable-list::-webkit-scrollbar-thumb {
+  background: var(--n-700);
+  border-radius: 4px;
+}
+.mt-scrollable-list::-webkit-scrollbar-thumb:hover {
+  background: var(--n-600);
+}
+.mt-scrollable-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--n-700) transparent;
+}
+
+/* Daha kısa kart variant'ı (örneğin "Bugünün öğünleri" gibi) */
+.mt-scrollable-list-sm {
+  max-height: 280px;
+}
