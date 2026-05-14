@@ -9,6 +9,11 @@ import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import MainTabsScreen from "./src/screens/MainTabsScreen";
 import NewHealthDataScreen from "./src/screens/NewHealthDataScreen";
+import HistoryScreen from "./src/screens/HistoryScreen";
+import SymptomsScreen from "./src/screens/SymptomsScreen";
+import NutritionScreen from "./src/screens/NutritionScreen";
+import SleepScreen from "./src/screens/SleepScreen";
+import ReportsScreen from "./src/screens/ReportsScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -43,6 +48,11 @@ function AppStack() {
         component={NewHealthDataScreen}
         options={{ title: "Yeni Kayıt" }}
       />
+      <Stack.Screen name="History" component={HistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Symptoms" component={SymptomsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Nutrition" component={NutritionScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Sleep" component={SleepScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Reports" component={ReportsScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
