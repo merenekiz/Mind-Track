@@ -37,6 +37,7 @@ export default function MainTabsScreen({ navigation }: Props) {
           <HomeScreen
             onOpenNew={() => navigation.navigate("NewHealthData")}
             onSwitchTab={(key) => setActive(key)}
+            onNavigate={(route) => navigation.navigate(route)}
           />
         )}
         {active === "analytics" && <AnalyticsScreen onBack={() => setActive("home")} onOpenSettings={() => setActive("settings")} />}

@@ -155,7 +155,7 @@ export const api = {
     return res.json();
   },
 
-  getImageAnalyses: () => request("/image-analysis"),
+  getImageAnalyses: () => request("/image-analysis/"),
 
   getImageAnalysis: (id: number) => request(`/image-analysis/${id}`),
 
