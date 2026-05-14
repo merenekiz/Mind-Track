@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Pressable, RefreshControl } from "react-native";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Pressable, RefreshControl, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
@@ -20,13 +20,22 @@ interface HealthData {
 interface Props {
   onOpenNew: () => void;
   onSwitchTab?: (key: string) => void;
+  onNavigate?: (route: string) => void;
 }
+
+const QUICK_ACCESS: { key: string; label: string; emoji: string; route: string }[] = [
+  { key: "history", label: "Geçmiş", emoji: "📓", route: "History" },
+  { key: "symptoms", label: "Belirtiler", emoji: "🩺", route: "Symptoms" },
+  { key: "nutrition", label: "Beslenme", emoji: "🍽", route: "Nutrition" },
+  { key: "sleep", label: "Uyku", emoji: "💤", route: "Sleep" },
+  { key: "reports", label: "Raporlar", emoji: "📊", route: "Reports" },
+];
 
 function formatLongDate(d: Date) {
   return d.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" });
 }
 
-export default function HomeScreen({ onOpenNew, onSwitchTab }: Props) {
+export default function HomeScreen({ onOpenNew, onSwitchTab, onNavigate }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { colors } = useTheme();
@@ -51,6 +60,28 @@ export default function HomeScreen({ onOpenNew, onSwitchTab }: Props) {
       loadData();
     }, [loadData])
   );
+
+  const handleLongPressDelete = (record: HealthData) => {
+    Alert.alert(
+      "Kaydı sil",
+      `${record.date} tarihli kaydı silmek istediğinize emin misiniz?`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Sil",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await api.deleteHealthData(record.id);
+              setData((prev) => prev.filter((d) => d.id !== record.id));
+            } catch (e: any) {
+              Alert.alert("Hata", e?.message || "Kayıt silinemedi.");
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const recent = data.slice(-7);
   const safeAvg = (arr: HealthData[], key: keyof HealthData) => {
@@ -153,6 +184,34 @@ export default function HomeScreen({ onOpenNew, onSwitchTab }: Props) {
           <View pointerEvents="none" style={[styles.insightGlow, { backgroundColor: colors.primary + "33" }]} />
         </View>
 
+        {/* Hızlı Erişim */}
+        <View style={styles.sectionHead}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Hızlı erişim</Text>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickRow}
+        >
+          {QUICK_ACCESS.map((q) => (
+            <Pressable
+              key={q.key}
+              onPress={() => onNavigate?.(q.route)}
+              style={({ pressed }) => [
+                styles.quickItem,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  opacity: pressed ? 0.6 : 1,
+                },
+              ]}
+            >
+              <Text style={styles.quickEmoji}>{q.emoji}</Text>
+              <Text style={[styles.quickLabel, { color: colors.text }]}>{q.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
         {/* Son aktivite (varsa) */}
         {data.length > 0 && (
           <>
@@ -172,7 +231,15 @@ export default function HomeScreen({ onOpenNew, onSwitchTab }: Props) {
                   ? { txt: "uyku", color: colors.secondary }
                   : { txt: "kayıt", color: colors.success };
                 return (
-                  <View key={r.id} style={[styles.actRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <Pressable
+                    key={r.id}
+                    onLongPress={() => handleLongPressDelete(r)}
+                    delayLongPress={400}
+                    style={({ pressed }) => [
+                      styles.actRow,
+                      { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.6 : 1 },
+                    ]}
+                  >
                     <Text style={[styles.actDate, { color: colors.text3 }]}>{r.date.slice(5)}</Text>
                     <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}>
                       <View style={[styles.actBadge, { backgroundColor: badge.color + "26" }]}>
@@ -182,7 +249,7 @@ export default function HomeScreen({ onOpenNew, onSwitchTab }: Props) {
                         {r.notes || `Stres ${r.stress_level ?? "—"} · Uyku ${r.sleep_hours ?? "—"}sa`}
                       </Text>
                     </View>
-                  </View>
+                  </Pressable>
                 );
               })}
             </View>
@@ -290,11 +357,36 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg, borderWidth: 1,
     padding: 12,
   },
-  quickItem: {
-    flex: 1, alignItems: "center", gap: 6,
-    paddingVertical: 10, borderRadius: radius.sm,
+  quickGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
   },
-  quickLabel: { fontSize: 10 },
+  quickRow: {
+    flexDirection: "row",
+    gap: 10,
+    paddingRight: 4,
+  },
+  quickItem: {
+    width: 96,
+    height: 96,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    paddingVertical: 14,
+  },
+  quickEmoji: {
+    fontSize: 28,
+    lineHeight: 32,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  quickLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    textAlign: "center",
+  },
   actRow: {
     flexDirection: "row", alignItems: "center",
     paddingVertical: 10, paddingHorizontal: 12,
