@@ -103,9 +103,9 @@ export default function HistoryPage() {
         </div>
       </header>
 
-      <div className="lm-content flex-1 overflow-y-auto">
+      <div className="lm-content flex-1 overflow-hidden" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {/* Search + filter chips */}
-        <div className="lm-panel" style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: 14 }}>
+        <div className="lm-panel" style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: 14, flexShrink: 0 }}>
           <div
             style={{
               width: 260,
@@ -153,6 +153,8 @@ export default function HistoryPage() {
                   fontSize: 12,
                   cursor: "pointer",
                   whiteSpace: "nowrap",
+                  lineHeight: 1.2,
+                  boxSizing: "border-box",
                 }}
               >
                 {f === "all" ? "Tümü" : f === "good" ? "İyi günler" : f === "bad" ? "Zor günler" : "Normal"}
@@ -184,14 +186,14 @@ export default function HistoryPage() {
             )}
           </div>
         ) : (
-          <div className="lm-panel">
-            <div className="lm-panel-head">
+          <div className="lm-panel" style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+            <div className="lm-panel-head" style={{ flexShrink: 0 }}>
               <h3>Tüm kayıtlar</h3>
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--n-400)" }}>
                 {filtered.length} / {data.length}
               </span>
             </div>
-            <div className="mt-scrollable-list" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div className="mt-scroll-fill" style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1, minHeight: 0, overflowY: "auto" }}>
               {filtered.map((record) => (
                 <div key={record.id} style={{
                   padding: 14,

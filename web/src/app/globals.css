@@ -865,30 +865,53 @@ input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cur
 /* ═══ Scrollable list — uzun listeleri sınırlı yükseklikte göster ═══ */
 .mt-scrollable-list {
   max-height: 420px;
-  overflow-y: auto;
+  overflow-y: scroll; /* her zaman göster — auto degil */
   overflow-x: hidden;
-  padding-right: 6px;
-  margin-right: -6px;
+  padding-right: 10px;
+  margin-right: -4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-500) var(--n-800);
 }
 .mt-scrollable-list::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 .mt-scrollable-list::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--n-800);
+  border-radius: 999px;
 }
 .mt-scrollable-list::-webkit-scrollbar-thumb {
-  background: var(--n-700);
-  border-radius: 4px;
+  background: var(--primary-500);
+  border-radius: 999px;
+  border: 2px solid var(--n-800);
 }
 .mt-scrollable-list::-webkit-scrollbar-thumb:hover {
-  background: var(--n-600);
-}
-.mt-scrollable-list {
-  scrollbar-width: thin;
-  scrollbar-color: var(--n-700) transparent;
+  background: var(--primary-600);
 }
 
 /* Daha kısa kart variant'ı (örneğin "Bugünün öğünleri" gibi) */
 .mt-scrollable-list-sm {
   max-height: 280px;
+}
+
+/* Parent panel'i tam dolduran scroll — flex container içindeki kullanım için */
+.mt-scroll-fill {
+  padding-right: 10px;
+  margin-right: -4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-500) var(--n-800);
+}
+.mt-scroll-fill::-webkit-scrollbar {
+  width: 10px;
+}
+.mt-scroll-fill::-webkit-scrollbar-track {
+  background: var(--n-800);
+  border-radius: 999px;
+}
+.mt-scroll-fill::-webkit-scrollbar-thumb {
+  background: var(--primary-500);
+  border-radius: 999px;
+  border: 2px solid var(--n-800);
+}
+.mt-scroll-fill::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-600);
 }

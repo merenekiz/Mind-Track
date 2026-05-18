@@ -206,7 +206,7 @@ export default function BelirtilerPage() {
                     Henüz belirti tespit edilmedi.
                   </div>
                 ) : (
-                  <div className="mt-scrollable-list mt-scrollable-list-sm" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div className="mt-scrollable-list" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {symptomCounts.map(([name, { count, severity }]) => {
                       const col = severityColor(severity);
                       const pct = totalCount === 0 ? 0 : (count / totalCount) * 100;

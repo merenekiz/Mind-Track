@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Icon } from "@/components/ui/Icons";
-import { buildLocalInsight } from "@/services/insights";
 import type { HealthData, Symptom } from "@/services/types";
 
 interface Message {
@@ -67,24 +66,22 @@ export default function AISohbetPage() {
     setInput("");
     setThinking(true);
 
-    setTimeout(() => {
-      const insight = buildLocalInsight({ healthData, imageAnalyses: [], symptoms });
-      let answer = "";
-      if (insight) {
-        answer = insight.summary;
-        if (insight.suggestion) answer += `\n\nÖnerim: ${insight.suggestion}`;
-        if (insight.confidence) answer += `\n\nGüven: %${Math.round(insight.confidence * 100)}.`;
-      } else {
-        answer = "Henüz analiz edebileceğim yeterli veri yok. Birkaç günlük kayıt sonrası daha kişiselleştirilmiş yorumlar yapabilirim.";
-      }
-      answer += "\n\nBu yorum bilgilendirme amaçlıdır, tıbbi tanı niteliği taşımaz.";
-
+    try {
+      const result: any = await api.aiChat(trimmed);
+      const answer = result?.reply || "AI cevap üretemedi.";
       setMessages((m) => [
         ...m,
         { id: crypto.randomUUID(), role: "assistant", content: answer, timestamp: new Date() },
       ]);
+    } catch (e: any) {
+      const msg = e?.message || "AI'ya ulaşılamadı.";
+      setMessages((m) => [
+        ...m,
+        { id: crypto.randomUUID(), role: "assistant", content: `⚠️ ${msg}`, timestamp: new Date() },
+      ]);
+    } finally {
       setThinking(false);
-    }, 900);
+    }
   };
 
   return (

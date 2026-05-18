@@ -41,21 +41,69 @@ export default function BeslenmePage() {
     } catch { /* */ }
   };
 
-  // Today's items
+  // En son veri günü (bugün varsa onu, yoksa son veri olan günü göster)
   const todayStr = new Date().toISOString().slice(0, 10);
-  const todayItems = useMemo(
-    () => items.filter((i) => i.created_at?.slice(0, 10) === todayStr),
-    [items, todayStr]
-  );
+  const todayItems = useMemo(() => {
+    const todayList = items.filter((i) => i.created_at?.slice(0, 10) === todayStr);
+    if (todayList.length > 0) return todayList;
+    if (items.length === 0) return [];
+    const latestDate = items
+      .map((i) => i.created_at?.slice(0, 10))
+      .filter(Boolean)
+      .sort()
+      .pop();
+    return items.filter((i) => i.created_at?.slice(0, 10) === latestDate);
+  }, [items, todayStr]);
+
+  const displayDate = useMemo(() => {
+    if (todayItems.length === 0) return "Bugün";
+    const d = todayItems[0].created_at?.slice(0, 10);
+    if (!d || d === todayStr) return "Bugün";
+    return new Date(d + "T00:00:00").toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
+  }, [todayItems, todayStr]);
 
   const todayCalories = todayItems.reduce((s, i) => s + (i.analysis_result?.estimated_calories ?? 0), 0);
   const goal = 2000;
   const goalPct = Math.min((todayCalories / goal) * 100, 100);
 
-  // Macro estimates (no real data → derive heuristically from calories: 50/25/25 split)
-  const carbsG = Math.round((todayCalories * 0.5) / 4);
-  const proteinG = Math.round((todayCalories * 0.25) / 4);
-  const fatG = Math.round((todayCalories * 0.25) / 9);
+  // Makro değerler — varsa gerçek nutrients'tan topla, yoksa kalori bazlı standart
+  // dağılım (%50 karb / %25 protein / %25 yağ — genel sağlıklı beslenme oranı)
+  const macros = useMemo(() => {
+    const real = { carbs: 0, protein: 0, fat: 0 };
+    let hasReal = false;
+    todayItems.forEach((i) => {
+      const ar: any = i.analysis_result;
+      const n: any = ar?.nutrients;
+      if (n && (n.carbs || n.protein || n.fat)) {
+        hasReal = true;
+        real.carbs += Number(n.carbs ?? 0);
+        real.protein += Number(n.protein ?? 0);
+        real.fat += Number(n.fat ?? 0);
+      }
+    });
+
+    if (hasReal) {
+      return { carbs: real.carbs, protein: real.protein, fat: real.fat, isEstimate: false };
+    }
+    // Fallback: kalori → makro (Atwater: karb 4 kcal/g, protein 4 kcal/g, yağ 9 kcal/g)
+    return {
+      carbs: (todayCalories * 0.5) / 4,
+      protein: (todayCalories * 0.25) / 4,
+      fat: (todayCalories * 0.25) / 9,
+      isEstimate: true,
+    };
+  }, [todayItems, todayCalories]);
+
+  const carbsG = Math.round(macros.carbs);
+  const proteinG = Math.round(macros.protein);
+  const fatG = Math.round(macros.fat);
+  const carbsCal = carbsG * 4;
+  const proteinCal = proteinG * 4;
+  const fatCal = fatG * 9;
+  const totalMacroCal = carbsCal + proteinCal + fatCal || 1;
+  const carbsPct = Math.round((carbsCal / totalMacroCal) * 100);
+  const proteinPct = Math.round((proteinCal / totalMacroCal) * 100);
+  const fatPct = Math.max(0, 100 - carbsPct - proteinPct);
 
   const mealsByType = useMemo(() => {
     const map: Record<string, ImageAnalysis[]> = {};
@@ -112,7 +160,7 @@ export default function BeslenmePage() {
             {/* Today calorie + macro split */}
             <div className="lm-panel">
               <div className="lm-panel-head">
-                <h3>Bugün</h3>
+                <h3>{displayDate}</h3>
                 <span style={{ fontSize: 12, color: "var(--primary-300)", fontFamily: "var(--font-mono)" }}>
                   {todayCalories.toLocaleString("tr-TR")} / {goal.toLocaleString("tr-TR")} kcal
                 </span>
@@ -122,9 +170,9 @@ export default function BeslenmePage() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 14 }}>
                 {[
-                  { l: "Karb.", v: `${carbsG}g`, c: "var(--primary-300)", pct: 50 },
-                  { l: "Protein", v: `${proteinG}g`, c: "var(--secondary)", pct: 25 },
-                  { l: "Yağ", v: `${fatG}g`, c: "var(--warning)", pct: 25 },
+                  { l: "Karb.", v: `${carbsG}g`, c: "var(--primary-300)", pct: carbsPct },
+                  { l: "Protein", v: `${proteinG}g`, c: "var(--secondary)", pct: proteinPct },
+                  { l: "Yağ", v: `${fatG}g`, c: "var(--warning)", pct: fatPct },
                 ].map((m) => (
                   <div key={m.l} className="lm-macro">
                     <div className="lab">{m.l}</div>
@@ -140,7 +188,7 @@ export default function BeslenmePage() {
             {/* Today's meals — 4 buckets */}
             <div className="lm-panel">
               <div className="lm-panel-head">
-                <h3>Bugünün öğünleri</h3>
+                <h3>{displayDate === "Bugün" ? "Bugünün öğünleri" : `${displayDate} öğünleri`}</h3>
                 <span style={{ fontSize: 11, color: "var(--n-400)", fontFamily: "var(--font-mono)" }}>
                   {todayItems.length} kayıt
                 </span>
@@ -209,6 +257,7 @@ export default function BeslenmePage() {
                       border: "1px solid var(--n-700)",
                       borderRadius: "var(--r-md)",
                       overflow: "hidden",
+                      position: "relative",
                     }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -216,18 +265,47 @@ export default function BeslenmePage() {
                         alt={r.food_type || "Beslenme görseli"}
                         style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }}
                       />
+                      {/* Sil butonu — görselin sağ üst köşesinde, her zaman görünür */}
+                      <button
+                        onClick={() => handleDelete(img.id)}
+                        title="Görseli sil"
+                        aria-label="Görseli sil"
+                        style={{
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          width: 32,
+                          height: 32,
+                          padding: 0,
+                          borderRadius: 8,
+                          background: "rgba(0,0,0,0.65)",
+                          backdropFilter: "blur(8px)",
+                          WebkitBackdropFilter: "blur(8px)",
+                          color: "#fff",
+                          border: "1px solid rgba(255,255,255,0.15)",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          transition: "all 0.15s ease",
+                          zIndex: 2,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "var(--danger)";
+                          e.currentTarget.style.borderColor = "var(--danger)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(0,0,0,0.65)";
+                          e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+                        }}
+                      >
+                        <Icon.Trash width={16} height={16} />
+                      </button>
                       <div style={{ padding: 12 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+                        <div style={{ marginBottom: 6 }}>
                           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--n-100)" }}>
                             {r.food_type || r.coffee_type || "Bilinmeyen"}
                           </div>
-                          <button
-                            onClick={() => handleDelete(img.id)}
-                            title="Sil"
-                            style={{ padding: 4, borderRadius: 6, background: "transparent", color: "var(--n-400)", border: "none", cursor: "pointer" }}
-                          >
-                            <Icon.Trash width={14} height={14} />
-                          </button>
                         </div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                           {r.estimated_calories !== undefined && (
