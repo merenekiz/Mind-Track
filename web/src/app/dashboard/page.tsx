@@ -101,19 +101,25 @@ export default function DashboardPage() {
   const [healthData, setHealthData] = useState<HealthData[]>([]);
   const [images, setImages] = useState<ImageAnalysis[]>([]);
   const [symptoms, setSymptoms] = useState<Symptom[]>([]);
+  const [aiSourceCount, setAISourceCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [trendTab, setTrendTab] = useState<TrendKey>("stress_level");
 
   const loadAll = useCallback(async () => {
     try {
-      const [hd, img, sym] = await Promise.all([
+      const [hd, img, sym, ai] = await Promise.all([
         api.getHealthData().catch(() => []),
         api.getImageAnalyses().catch(() => []),
         api.getSymptoms().catch(() => []),
+        api.getAIAnalyses(1).catch(() => []),
       ]);
       setHealthData(hd || []);
       setImages(img || []);
       setSymptoms(sym || []);
+      // Son AI analizinin bilimsel referans sayısı (yoksa 0)
+      const latest = ai && ai[0];
+      const refs = latest?.scientific_references?.items?.length ?? 0;
+      setAISourceCount(refs);
     } finally {
       setLoading(false);
     }
@@ -313,7 +319,10 @@ export default function DashboardPage() {
               marginBottom: 14,
               fontFamily: "var(--font-mono)",
             }}>
-              <Icon.Document width={11} height={11} /> {insight?.sources?.length ?? 0} bilimsel kaynak · pgvector
+              <Icon.Document width={11} height={11} />{" "}
+              {aiSourceCount > 0
+                ? `${aiSourceCount} bilimsel kaynak · pgvector`
+                : "Henüz AI rapor üretilmedi · Raporlar sayfasından üretin"}
             </div>
             <Link href="/dashboard/ai-sohbet" className="lm-btn lm-btn-secondary lm-btn-block">
               Tüm içgörüleri gör →

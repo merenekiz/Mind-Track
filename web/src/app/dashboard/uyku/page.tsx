@@ -17,10 +17,6 @@ function fmtDuration(hours: number) {
   return { h, m };
 }
 
-function pad(n: number) {
-  return n < 10 ? `0${n}` : `${n}`;
-}
-
 export default function UykuPage() {
   const { user } = useAuth();
   const [data, setData] = useState<HealthData[]>([]);
@@ -60,16 +56,10 @@ export default function UykuPage() {
   const rem = fmtDuration(remHours);
   const light = fmtDuration(lightHours);
 
-  // Bedtime / wake — derive from today's hours; assume waking at 06:00 if no specific data
-  const wakeHour = 6;
-  const wakeMin = 0;
-  const bedTotalMin = wakeHour * 60 + wakeMin - todayHours * 60;
-  const bedH = ((Math.floor(bedTotalMin / 60) + 24) % 24);
-  const bedM = ((Math.round(bedTotalMin) % 60) + 60) % 60;
-
   const dayNames = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
   const sleepBars = last7.map((d, i) => ({
-    label: dayNames[i % 7],
+    label: dayNames[new Date(d.date + "T00:00:00").getDay() === 0 ? 6 : new Date(d.date + "T00:00:00").getDay() - 1],
+    hours: d.sleep_hours,
     pct: d.sleep_hours ? Math.min(((d.sleep_hours || 0) / 10) * 100, 100) : 0,
     isToday: i === last7.length - 1,
   }));
@@ -183,51 +173,96 @@ export default function UykuPage() {
                     ort. {avgDur.h}sa {avgDur.m}dk
                   </span>
                 </div>
-                <div className="lm-sleep-bars">
-                  {sleepBars.length === 0 ? (
-                    <div style={{ width: "100%", textAlign: "center", color: "var(--n-400)", fontSize: 12 }}>
-                      Veri yok
+                {/* Etiketli bar grafik — her bar üstünde uyku saati */}
+                {sleepBars.length === 0 ? (
+                  <div style={{ padding: "32px 0", textAlign: "center", color: "var(--n-400)", fontSize: 13 }}>
+                    Veri yok
+                  </div>
+                ) : (
+                  <>
+                    <div style={{
+                      display: "flex",
+                      alignItems: "flex-end",
+                      gap: 8,
+                      height: 180,
+                      padding: "8px 4px 0",
+                    }}>
+                      {sleepBars.map((b, i) => (
+                        <div key={i} style={{
+                          flex: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 6,
+                          height: "100%",
+                          justifyContent: "flex-end",
+                        }}>
+                          <span style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: b.isToday ? "var(--primary-300)" : "var(--n-300)",
+                            fontFamily: "var(--font-mono)",
+                          }}>
+                            {b.hours != null ? `${b.hours.toFixed(1)}sa` : "—"}
+                          </span>
+                          <div style={{
+                            width: "100%",
+                            maxWidth: 32,
+                            height: `${Math.max(4, b.pct)}%`,
+                            background: b.isToday
+                              ? "linear-gradient(180deg, var(--primary-500), var(--primary-700))"
+                              : "var(--n-700)",
+                            borderRadius: 6,
+                            transition: "all 0.3s ease",
+                          }} />
+                        </div>
+                      ))}
                     </div>
-                  ) : sleepBars.map((b, i) => (
-                    <i key={i} style={{ height: `${b.pct}%`, opacity: b.isToday ? 1 : 0.55 }} />
-                  ))}
-                </div>
-                <div style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: 10,
-                  color: "var(--n-400)",
-                  fontFamily: "var(--font-mono)",
-                  marginTop: 6,
-                }}>
-                  {sleepBars.map((b, i) => <span key={i}>{b.label}</span>)}
-                </div>
+                    {/* Gün etiketleri */}
+                    <div style={{
+                      display: "flex",
+                      gap: 8,
+                      marginTop: 8,
+                      padding: "0 4px",
+                    }}>
+                      {sleepBars.map((b, i) => (
+                        <span key={i} style={{
+                          flex: 1,
+                          fontSize: 10,
+                          color: b.isToday ? "var(--primary-300)" : "var(--n-400)",
+                          textAlign: "center",
+                          fontWeight: b.isToday ? 700 : 500,
+                          fontFamily: "var(--font-mono)",
+                          textTransform: "uppercase",
+                        }}>
+                          {b.label}
+                        </span>
+                      ))}
+                    </div>
 
-                {/* Yatış / Uyanış / Gecikme metric strip */}
-                <div style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginTop: 18,
-                  padding: "12px 14px",
-                  background: "var(--n-800)",
-                  border: "1px solid var(--n-700)",
-                  borderRadius: "var(--r-md)",
-                }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <span style={{ fontSize: 10, color: "var(--n-400)", fontFamily: "var(--font-mono)" }}>YATIŞ</span>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--n-100)" }}>{pad(bedH)}:{pad(bedM)}</span>
-                  </div>
-                  <div style={{ width: 1, background: "var(--n-700)" }} />
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <span style={{ fontSize: 10, color: "var(--n-400)", fontFamily: "var(--font-mono)" }}>UYANIŞ</span>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--n-100)" }}>{pad(wakeHour)}:{pad(wakeMin)}</span>
-                  </div>
-                  <div style={{ width: 1, background: "var(--n-700)" }} />
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <span style={{ fontSize: 10, color: "var(--n-400)", fontFamily: "var(--font-mono)" }}>GECİKME</span>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--n-100)" }}>~22dk</span>
-                  </div>
-                </div>
+                    {/* Legend: bugün vs diğer */}
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: 16,
+                      marginTop: 14,
+                      fontSize: 10,
+                      color: "var(--n-400)",
+                    }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--primary-500)" }} />
+                        Bugün
+                      </span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--n-700)" }} />
+                        Önceki günler
+                      </span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--n-300)" }}>
+                        Hedef: 8sa
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -238,6 +273,36 @@ export default function UykuPage() {
                   <h3>Uyku kalitesi · son 7 gün</h3>
                   <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--n-400)" }}>1–5 skala</span>
                 </div>
+
+                {/* Legend — renk anlamı */}
+                <div style={{
+                  display: "flex",
+                  gap: 12,
+                  marginBottom: 14,
+                  paddingBottom: 12,
+                  borderBottom: "1px solid var(--n-700)",
+                  flexWrap: "wrap",
+                  fontSize: 10,
+                  color: "var(--n-400)",
+                }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--success)" }} />
+                    Çok iyi (4-5)
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--secondary)" }} />
+                    İyi (3)
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--warning)" }} />
+                    Orta (2)
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--danger)" }} />
+                    Kötü (1)
+                  </span>
+                </div>
+
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {last7.length === 0 ? (
                     <div style={{ padding: "24px 0", textAlign: "center", color: "var(--n-400)", fontSize: 13 }}>
@@ -250,7 +315,9 @@ export default function UykuPage() {
                     return (
                       <div key={d.id} className="lm-dist-row">
                         <span className="name">{new Date(d.date + "T00:00:00").toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}</span>
-                        <div className="bar"><i style={{ width: `${pct}%`, background: col }} /></div>
+                        <div className="bar">
+                          {q > 0 && <i style={{ width: `${pct}%`, background: col }} />}
+                        </div>
                         <span className="pct">{q || "—"}/5</span>
                       </div>
                     );

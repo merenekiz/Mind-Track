@@ -170,7 +170,11 @@ export const api = {
   deleteSymptom: (id: number) =>
     request(`/symptoms/${id}`, { method: "DELETE" }),
 
-  // AI Analysis
+  // AI Chat (interaktif sohbet — Gemini)
+  aiChat: (message: string) =>
+    request("/ai-chat/chat", { method: "POST", body: JSON.stringify({ message }) }),
+
+  // AI Analysis (bütünsel rapor)
   generateAIAnalysis: (data?: { date?: string; days_back?: number; include_rag?: boolean }) =>
     request("/ai-analysis/generate", {
       method: "POST",
