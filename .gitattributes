@@ -1,0 +1,6 @@
+# Platform boilerplate — exclude from GitHub language stats so the
+# Languages bar reflects the actual stack (TypeScript, Python)
+mobile/android/** linguist-vendored
+mobile/ios/** linguist-vendored
+mobile/Gemfile linguist-vendored
+mobile/Podfile linguist-vendored

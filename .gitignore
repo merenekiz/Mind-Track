@@ -43,3 +43,7 @@ mobile/android/build/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# Internal dev process docs (not part of public repo)
+İŞ-PAKETLERİ.md
+CLAUDE.md
